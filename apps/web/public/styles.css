@@ -382,6 +382,44 @@ select {
   color: #a12626;
   border-color: #d59292;
 }
+.evidence-actions button {
+  width: 100%;
+}
+dialog {
+  width: min(520px, calc(100% - 32px));
+  border: 0;
+  border-radius: 14px;
+  padding: 0;
+  box-shadow: 0 24px 60px rgba(16, 24, 40, 0.3);
+}
+dialog::backdrop {
+  background: rgba(16, 24, 40, 0.58);
+}
+.confirmation-card {
+  padding: 22px;
+}
+.confirmation-card dl {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 10px;
+}
+.confirmation-card dt {
+  font-weight: 800;
+}
+.confirmation-card dd {
+  margin: 0;
+  min-width: 0;
+}
+.confirmation-card pre {
+  margin: 0;
+  max-height: 220px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: #f2f4f7;
+  border-radius: 8px;
+  padding: 10px;
+}
 footer {
   display: flex;
   justify-content: center;

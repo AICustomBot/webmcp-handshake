@@ -128,8 +128,33 @@
             </div>
           </article>
         </section>
+
+        <section class="evidence-actions" aria-labelledby="evidence-title">
+          <p class="eyebrow">Exportable proof</p>
+          <h2 id="evidence-title">Decision receipt</h2>
+          <p class="muted">Download the allowlisted synthetic session evidence as JSON.</p>
+          <button id="download-receipt" type="button">Download receipt</button>
+        </section>
       </aside>
     </main>
+
+    <dialog id="confirmation-dialog" aria-labelledby="confirmation-title">
+      <form method="dialog" class="confirmation-card">
+        <p class="eyebrow">Protected synthetic action</p>
+        <h2 id="confirmation-title">Confirm exact action</h2>
+        <p>This action cannot run until you confirm its exact name and payload.</p>
+        <dl>
+          <dt>Action</dt>
+          <dd><code id="confirmation-action"></code></dd>
+          <dt>Payload</dt>
+          <dd><pre id="confirmation-payload"></pre></dd>
+        </dl>
+        <div class="button-row">
+          <button id="confirm-action" class="primary" type="button">Confirm exact action</button>
+          <button id="cancel-confirmation" value="cancel">Cancel</button>
+        </div>
+      </form>
+    </dialog>
 
     <footer>
       <span>Page-owned decision route</span><span>Versioned writes</span
