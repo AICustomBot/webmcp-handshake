@@ -13,6 +13,10 @@ Handshake keeps approval and confirmation page-owned. The agent tool can request
 - Audit events are bounded by the frozen contract limit.
 - Sessions created before the evidence schema are normalized and persisted before protected routes execute.
 
+## Page-owned confirmation
+
+The frozen `request_protected_action` tool schema does not accept proof material. When an exact action first needs consent, the page opens a modal that displays the exact action and JSON payload. A human confirmation issues a short-lived proof through the page-only route. The proof remains in page memory and is injected only into the next matching tool retry; cancel or Escape grants nothing.
+
 ## Protected actions
 
 - `book_consultation`
@@ -20,8 +24,10 @@ Handshake keeps approval and confirmation page-owned. The agent tool can request
 
 Both actions are synthetic demonstrations. No real appointment, purchase, quote, or external side effect occurs.
 
+## Receipt export
+
+The page downloads the allowlisted receipt as JSON and revokes its temporary blob URL after the download begins.
+
 ## Verification
 
-The automated suite covers exact matching, action/payload/session mismatch, missing proof, expiration, replay, concurrent consumption, audit versioning, and proof redaction. Repository CI also runs formatting, TypeScript checks, unit tests, and a Wrangler dry run.
-
-The final validation run is triggered only after generated integration code and temporary diagnostics have been removed from the branch.
+The automated suite covers exact matching, action/payload/session mismatch, missing proof, expiration, replay, concurrent consumption, audit versioning, and proof redaction. Repository CI also runs formatting, TypeScript checks, 62 unit tests, and a Wrangler dry run.
