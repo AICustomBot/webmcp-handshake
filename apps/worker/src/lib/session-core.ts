@@ -675,7 +675,11 @@ async function dispatch(
       );
       return fail('CONFIRMATION_REQUIRED', CONFIRMATION_MESSAGE, ctx.requestId, {
         retryable: true,
-        data: { confirmationId, actionDigest, expiresAt: confirmation.expiresAt },
+        data: {
+          confirmationId: newConfirmationId,
+          actionDigest,
+          expiresAt: confirmation.expiresAt,
+        },
       });
     }
 
@@ -716,7 +720,7 @@ export async function routeRequest(
       return { status: existing.status, envelope: existing.body };
     }
     const result = await dispatch(storage, method, subPath, ctx, body);
-    if (result.status < 500) {
+    if (result.status < 400) {
       const entry: IdemEntry = {
         requestId: ctx.requestId,
         status: result.status,
