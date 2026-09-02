@@ -8,8 +8,10 @@
     "deploy": "wrangler deploy",
     "check": "pnpm format:check && pnpm typecheck && pnpm test",
     "format:check": "prettier --check .",
+    "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:smoke": "node scripts/smoke-golden-journey.mjs"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260902.1",
