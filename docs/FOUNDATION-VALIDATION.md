@@ -42,11 +42,20 @@ The scaffold was authored without registry access, so three version assumptions 
 | Format               | `pnpm format:check`             | Pass, all matched files use Prettier style                                                  |
 | Worker dry-run build | `npx wrangler deploy --dry-run` | Pass, 0.99 KiB upload; bindings resolved for `DESIGN_SESSION` (Durable Object) and `ASSETS` |
 
+## Passed in the full gated run (2 September 2026)
+
+| Check                   | Command                                 | Result                                                                                      |
+| ----------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Frozen-lockfile install | `pnpm install --frozen-lockfile`        | Pass against the committed `pnpm-lock.yaml` (pnpm 10.15.0, Node v22.22.3)                   |
+| Full check              | `pnpm check`                            | Pass: format clean, `tsc --noEmit` clean, Vitest 2/2 tests passed in 113ms                  |
+| Worker dry-run build    | `CI=true npx wrangler deploy --dry-run` | Pass, 1.04 KiB upload; bindings resolved for `DESIGN_SESSION` (Durable Object) and `ASSETS` |
+| Hygiene                 | `git ls-tree HEAD`, `git status`        | Stray `.tsconfig.json.swp` removed from the tree; `*.swp` added to `.gitignore`             |
+
 ## Open before HSK-01 can close
 
-- Re-run `pnpm check` after the Durable Object correction and record typecheck and unit-test output.
-- Commit `pnpm-lock.yaml` with the resolved versions so CI `--frozen-lockfile` can pass.
-- Confirm the first CI run is green, then mark the pull request ready for review.
+- Re-run `pnpm check` after the Durable Object correction and record typecheck and unit-test output. (Done above.)
+- Commit `pnpm-lock.yaml` with the resolved versions so CI `--frozen-lockfile` can pass. (Done on this branch.)
+- Confirm the first CI run is green, then mark the pull request ready for review. (Pending push and CI.)
 
 ## Operational note
 
