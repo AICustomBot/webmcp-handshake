@@ -11,6 +11,7 @@ Handshake keeps approval and confirmation page-owned. The agent tool can request
 - Receipts are generated from authoritative Durable Object state and deterministic catalog evaluation.
 - Public receipts exclude session capabilities, secret proofs, personal data, and hidden model reasoning.
 - Audit events are bounded by the frozen contract limit.
+- Sessions created before the evidence schema are normalized and persisted before protected routes execute.
 
 ## Protected actions
 
