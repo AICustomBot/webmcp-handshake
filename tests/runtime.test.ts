@@ -44,6 +44,22 @@ describe('body limits and safe failures', () => {
     await expect(readBoundedJson(request)).rejects.toThrow(RangeError);
   });
 
+  it('rejects an oversized streamed body without a content-length header', async () => {
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode('x'.repeat(LIMITS.maxBodyBytes + 1)));
+        controller.close();
+      },
+    });
+    const request = new Request('https://example.test', {
+      method: 'POST',
+      body: stream,
+      duplex: 'half',
+    } as RequestInit & { duplex: 'half' });
+    expect(request.headers.has('content-length')).toBe(false);
+    await expect(readBoundedJson(request)).rejects.toThrow(RangeError);
+  });
+
   it('rejects malformed JSON without recovering unsafely', async () => {
     const request = new Request('https://example.test', {
       method: 'POST',
