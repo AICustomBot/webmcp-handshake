@@ -1,1 +1,6 @@
-{ "name": "@handshake/web", "version": "0.1.0", "private": true, "type": "module" }
+{
+  "name": "@handshake/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module"
+}

@@ -1,4 +1,5 @@
 ## Scope
+
 Issue:
 
 ## Acceptance mapping
@@ -6,10 +7,12 @@ Issue:
 ## Changed files
 
 ## Evidence
+
 Commands and results:
 Screenshots/traces:
 
 ## Security/privacy
+
 - [ ] Synthetic data only
 - [ ] Negative authorization/replay tests where applicable
 - [ ] No secrets or personal data
@@ -17,4 +20,5 @@ Screenshots/traces:
 ## Risks and rollback
 
 ## Gates
+
 - [ ] No deployment/publication/submission performed

@@ -16,7 +16,11 @@ export default {
     return Response.json(
       {
         ok: false,
-        error: { code: 'NOT_IMPLEMENTED', message: 'Architecture scaffold only.', retryable: false },
+        error: {
+          code: 'NOT_IMPLEMENTED',
+          message: 'Architecture scaffold only.',
+          retryable: false,
+        },
       },
       { status: 501 },
     );

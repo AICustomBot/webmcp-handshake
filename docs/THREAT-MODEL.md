@@ -1,9 +1,11 @@
 # Threat model, privacy and audit policy
 
 ## Protected assets
+
 Committed design state, human decisions, session capability, proposal integrity, protected-action confirmations, audit receipts, availability, and truthful public claims.
 
 ## Primary threats and controls
+
 - Agent self-approval: no agent-facing approval tool; UI-origin decision endpoint with current proposal/hash binding.
 - Forged UI event: same-origin checks, session capability, anti-replay token, state/version validation.
 - Stale proposal overwrite: expected-version precondition and atomic DO transition.
@@ -16,4 +18,5 @@ Committed design state, human decisions, session capability, proposal integrity,
 - Denial of service: per-session/IP best-effort limits, operation bounds, DO alarms and retention.
 
 ## Retention
+
 Synthetic session expires after 24 hours by alarm. No analytics cookies or third-party trackers in MVP. Logs contain route, safe reason code, latency, request ID and opaque session hash only.
