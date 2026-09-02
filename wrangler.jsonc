@@ -1,0 +1,10 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "webmcp-handshake",
+  "main": "apps/worker/src/index.ts",
+  "compatibility_date": "2026-08-31",
+  "assets": { "directory": "./apps/web/public", "binding": "ASSETS", "run_worker_first": ["/api/*"] },
+  "durable_objects": { "bindings": [{ "name": "DESIGN_SESSION", "class_name": "DesignSession" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["DesignSession"] }],
+  "observability": { "enabled": true, "head_sampling_rate": 1 }
+}

@@ -1,0 +1,13 @@
+# Implementation decision record v0.1
+
+Frozen by Ehab on 2 September 2026 unless superseded through an accepted ADR.
+
+- Product: Handshake; “Design together. Approve with proof.”
+- Team: Ehab, Mohammed, Kholoud.
+- Repository: `AICustomBot/webmcp-handshake`; Apache-2.0; private during build, public only at release gate.
+- Runtime: Cloudflare Workers, Static Assets and one Durable Object per session.
+- Storage: DO storage only; no D1, KV or R2 in MVP.
+- Consent: two-phase proposal approval and separate protected-action confirmation.
+- Data: synthetic only.
+- Coding agents: unassigned; multiple bounded agents may contribute with one accountable owner per issue.
+- Deployment, public repository, video, claims and Devpost submission require final Ehab review.
