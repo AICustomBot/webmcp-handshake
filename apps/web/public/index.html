@@ -2,52 +2,192 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <link rel="stylesheet" href="./styles.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Handshake — Design together. Approve with proof.</title>
+    <meta
+      name="description"
+      content="A WebMCP co-design studio where the agent proposes and the human approves with proof."
+    />
+    <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <header>
-      <div><b>Handshake</b><span class="tag">Synthetic demo</span></div>
-      <p>Design together. Approve with proof.</p>
-    </header>
-    <main>
-      <aside>
-        <h2>Fixture catalog</h2>
-        <input aria-label="Search catalog" placeholder="matte black vanity" />
-        <article><b>Harbor vanity</b><small>Matte black · $2,480</small></article>
-        <article><b>Open-entry shower</b><small>Accessible tag · $4,900</small></article>
-      </aside>
-      <section class="canvas">
-        <div class="section-head">
-          <div>
-            <h1>9 × 11 bathroom</h1>
-            <p>Committed design · Version 4</p>
-          </div>
-          <span class="status">● WebMCP ready</span>
+    <a class="skip-link" href="#canvas-region">Skip to room canvas</a>
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">⌘</span>
+        <div class="brand-text">
+          <strong>Handshake</strong>
+          <span class="tagline">Design together. Approve with proof.</span>
         </div>
-        <div class="room" role="img" aria-label="Room plan with pending vanity move">
-          <div class="fixture vanity">Vanity</div>
-          <div class="fixture shower">Shower</div>
-          <div class="fixture toilet">WC</div>
-          <div class="proposal">Pending move<br /><b>30 in left</b></div>
+      </div>
+      <span class="badge badge-demo" title="All data in this workspace is synthetic"
+        >SYNTHETIC DEMO</span
+      >
+      <span id="webmcp-chip" class="chip chip-off" role="status">WebMCP: unavailable</span>
+      <div class="header-actions">
+        <button id="btn-help" class="btn btn-ghost" type="button">Help</button>
+        <button id="btn-reset" class="btn btn-ghost" type="button">Reset session</button>
+      </div>
+    </header>
+
+    <p id="status-region" class="visually-hidden" role="status" aria-live="polite"></p>
+    <p id="error-region" class="status-line status-error" role="alert" hidden></p>
+
+    <main class="studio">
+      <section class="rail rail-left" aria-labelledby="catalog-heading">
+        <h2 id="catalog-heading">Synthetic catalog</h2>
+        <div
+          id="catalog-filters"
+          class="filter-row"
+          role="group"
+          aria-label="Catalog category filters"
+        ></div>
+        <div id="catalog-list" class="catalog-list"></div>
+      </section>
+
+      <section class="canvas-region" id="canvas-region" aria-labelledby="canvas-heading">
+        <div class="canvas-toolbar">
+          <h2 id="canvas-heading">Room plan</h2>
+          <span class="hint">Click an item, then arrow keys nudge 1in (Shift = 6in)</span>
+        </div>
+        <div
+          id="svg-holder"
+          class="svg-holder"
+          tabindex="0"
+          role="application"
+          aria-label="Room plan canvas. Use the item table below for keyboard edits."
+        >
+          <div class="canvas-empty" id="canvas-empty" hidden>
+            <p><strong>Empty room.</strong></p>
+            <p>Add a product from the catalog, or ask the agent to propose a layout.</p>
+          </div>
+        </div>
+        <table class="sr-only" id="item-table" aria-label="Placed items with positions">
+          <caption>
+            Placed items
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Item</th>
+              <th scope="col">Product</th>
+              <th scope="col">X (in)</th>
+              <th scope="col">Y (in)</th>
+              <th scope="col">Rotation</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body"></tbody>
+        </table>
+      </section>
+
+      <section class="rail rail-right" aria-labelledby="decision-heading">
+        <div class="panel" aria-labelledby="budget-heading">
+          <h3 id="budget-heading">Budget</h3>
+          <div class="budget-bar" role="img" id="budget-bar" aria-label="Budget usage">
+            <div class="budget-fill" id="budget-fill"></div>
+          </div>
+          <p id="budget-text" class="budget-text">—</p>
+        </div>
+
+        <div class="panel" aria-labelledby="checks-heading">
+          <h3 id="checks-heading">Deterministic checks</h3>
+          <ul id="checks-list" class="checks-list"></ul>
+        </div>
+
+        <div class="panel" aria-labelledby="decision-heading">
+          <h3 id="decision-heading">Proposals &amp; decisions</h3>
+          <div id="proposals-list" class="proposals-list"></div>
+        </div>
+
+        <div class="panel" aria-labelledby="protected-heading">
+          <h3 id="protected-heading">Protected actions</h3>
+          <p class="panel-note">Require fresh human confirmation. Five-minute, single-use.</p>
+          <div class="protected-actions">
+            <button id="btn-book" class="btn btn-outline" type="button">Book showroom visit</button>
+            <button id="btn-quote" class="btn btn-outline" type="button">Request quote</button>
+          </div>
+        </div>
+
+        <div class="panel" aria-labelledby="receipt-heading">
+          <h3 id="receipt-heading">Evidence receipt</h3>
+          <div class="protected-actions">
+            <button id="btn-receipt-json" class="btn btn-outline" type="button">
+              Download JSON receipt
+            </button>
+            <button id="btn-receipt-print" class="btn btn-outline" type="button">
+              Print summary
+            </button>
+          </div>
         </div>
       </section>
-      <aside>
-        <h2>Budget & checks</h2>
-        <div class="metric"><span>Committed</span><b>$11,420</b></div>
-        <div class="check">
-          <b>Clearance warning</b><span>28 in measured · 60 in demo goal</span>
-        </div>
-        <h2>Pending proposal</h2>
-        <div class="card">
-          <h3>Move vanity 30 in left</h3>
-          <p>No committed state changes until you decide.</p>
-          <button class="primary">Approve</button><button>Reject</button>
-        </div>
-      </aside>
     </main>
-    <footer>Page-owned consent · Structured tools · Evidence receipts</footer>
-    <script type="module" src="./app.js"></script>
+
+    <section class="timeline-region" aria-labelledby="timeline-heading">
+      <h2 id="timeline-heading">Session timeline</h2>
+      <ul id="timeline-list" class="timeline-list"></ul>
+    </section>
+
+    <section class="agent-console" aria-labelledby="console-heading">
+      <h2>
+        <button id="console-toggle" class="console-toggle" type="button" aria-expanded="false">
+          Agent console <span id="console-hint" class="hint">(WebMCP tools log here)</span>
+        </button>
+      </h2>
+      <div id="console-body" class="console-body" hidden>
+        <p class="panel-note" id="console-status"></p>
+        <ul id="console-log" class="console-log" aria-label="Agent tool call log"></ul>
+      </div>
+    </section>
+
+    <dialog id="confirm-dialog" class="confirm-dialog" aria-labelledby="confirm-title">
+      <form method="dialog" id="confirm-form">
+        <h2 id="confirm-title">Confirm protected action</h2>
+        <p id="confirm-summary" class="confirm-summary"></p>
+        <p class="confirm-note">
+          This is an explicit human decision. The agent cannot approve. The confirmation is
+          single-use and expires in five minutes.
+        </p>
+        <div class="confirm-actions">
+          <button value="cancel" class="btn btn-ghost" type="submit" id="confirm-cancel">
+            Cancel
+          </button>
+          <button value="confirm" class="btn btn-primary" type="submit" id="confirm-accept">
+            Confirm as human
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="help-dialog" class="confirm-dialog" aria-labelledby="help-title">
+      <h2 id="help-title">How Handshake works</h2>
+      <ol class="help-list">
+        <li>
+          The agent (via WebMCP tools) reads room state, searches the synthetic catalog and runs
+          deterministic checks.
+        </li>
+        <li>
+          It can only <strong>propose</strong> changes — proposals never touch committed state.
+        </li>
+        <li>
+          You approve or reject each proposal in this page. Approval records the exact proposal
+          hash.
+        </li>
+        <li>
+          Apply revalidates everything (expiry, version, hash, budget) and commits atomically.
+        </li>
+        <li>Protected actions (booking, quotes) need a fresh, single-use human confirmation.</li>
+        <li>Every step is audited; download the evidence receipt at any time.</li>
+      </ol>
+      <form method="dialog"><button class="btn btn-primary" type="submit">Got it</button></form>
+    </dialog>
+
+    <footer class="app-footer">
+      <p>
+        Handshake — WebMCP Challenge demo. All catalog items, prices, bookings and quotes are
+        synthetic. Clearance checks are simplified demo heuristics, not code or professional
+        compliance approvals.
+      </p>
+    </footer>
+
+    <script src="/app.js" defer></script>
   </body>
 </html>
