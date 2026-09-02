@@ -11,6 +11,11 @@ const BASE = (process.env.SMOKE_BASE ?? 'http://127.0.0.1:8787').replace(/\/$/, 
 let step = 0;
 const passed = [];
 
+/**
+ * Asserts a boolean condition, records step progress, and aborts with a diagnostic error on failure.
+ * @param {boolean} condition - Boolean condition to assert.
+ * @param {string} message - Descriptive label for the assertion.
+ */
 function assert(condition, message) {
   step += 1;
   if (!condition) {
@@ -152,7 +157,34 @@ assert(
   'Error code is PROPOSAL_HASH_MISMATCH',
 );
 
-// 10. Human UI approval
+// 10. Cross-session unauthorized decision rejection
+const outsiderSessionRes = await fetch(`${BASE}/api/v1/sessions`, {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ widthIn: 108, lengthIn: 132, budgetCents: 1400000 }),
+});
+const outsiderSessionData = await outsiderSessionRes.json();
+const outsiderApproveRes = await fetch(
+  `${BASE}/api/v1/sessions/${outsiderSessionData.data.sessionId}/decisions`,
+  {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-handshake-capability': outsiderSessionData.data.capability,
+    },
+    body: JSON.stringify({
+      proposalId: proposal.id,
+      proposalHash: proposal.hash,
+      outcome: 'approve',
+    }),
+  },
+);
+assert(
+  outsiderApproveRes.status === 404 || outsiderApproveRes.status === 403,
+  'Outsider session cannot decide a proposal belonging to another session',
+);
+
+// 11. Human UI approval
 const approveRes = await fetch(`${BASE}/api/v1/sessions/${sessionId}/decisions`, {
   method: 'POST',
   headers: authHeaders,
@@ -167,7 +199,7 @@ const approveData = await approveRes.json();
 assert(approveData.ok === true, 'Approval succeeded');
 assert(approveData.data.proposal.status === 'approved', 'Proposal status transitioned to approved');
 
-// 11. Approval did NOT mutate committed room state
+// 12. Approval did NOT mutate committed room state
 const checkStateAfterApprove = await fetch(`${BASE}/api/v1/sessions/${sessionId}/state`, {
   headers: authHeaders,
 });
@@ -178,7 +210,7 @@ assert(
   'Approval did NOT mutate committed room state (version is still 0, items 0)',
 );
 
-// 12. Apply approved proposal
+// 13. Apply approved proposal
 const applyIdemKey = `idem-apply-${Date.now()}`;
 const applyRes = await fetch(`${BASE}/api/v1/sessions/${sessionId}/apply`, {
   method: 'POST',
@@ -198,7 +230,7 @@ assert(applyData.data.state.items.length === 1, 'Committed items count is 1');
 const committedItem = applyData.data.state.items[0];
 assert(committedItem.productId === 'harbor-vanity', 'Placed item is harbor-vanity');
 
-// 13. Replay of apply with stale version / applied proposal fails closed
+// 14. Replay of apply with stale version / applied proposal fails closed
 const replayApplyRes = await fetch(`${BASE}/api/v1/sessions/${sessionId}/apply`, {
   method: 'POST',
   headers: authHeaders,
@@ -211,7 +243,7 @@ const replayApplyRes = await fetch(`${BASE}/api/v1/sessions/${sessionId}/apply`,
 });
 assert(!replayApplyRes.ok, 'Applying already-applied proposal fails closed');
 
-// 14. Manual edit via human UI route
+// 15. Manual edit via human UI route
 const editRes = await fetch(`${BASE}/api/v1/sessions/${sessionId}/edits`, {
   method: 'POST',
   headers: authHeaders,
@@ -234,7 +266,22 @@ assert(editData.ok === true, 'Manual edit succeeded');
 assert(editData.data.state.version === 2, 'Room version incremented to 2');
 assert(editData.data.state.items[0].x === 30, 'Manual position updated to x: 30');
 
-// 15. Protected action without confirmation fails closed
+// 16. Post-edit clearance and design evaluation
+const stateAfterEditRes = await fetch(`${BASE}/api/v1/sessions/${sessionId}/state`, {
+  headers: authHeaders,
+});
+const stateAfterEditData = await stateAfterEditRes.json();
+assert(stateAfterEditData.ok === true, 'GET state after edit returns ok');
+assert(
+  stateAfterEditData.data.evaluation.committedCents === 248000,
+  'Post-edit evaluation reflects committed item pricing ($2,480.00)',
+);
+assert(
+  Array.isArray(stateAfterEditData.data.evaluation.findings),
+  'Post-edit evaluation returns clearance and layout findings array',
+);
+
+// 17. Protected action without confirmation fails closed
 const protectedActionInput = {
   action: 'book_consultation',
   payload: { day: '2026-09-05', showroom: 'Cairo' },
@@ -252,7 +299,7 @@ assert(
   'Error code is CONFIRMATION_REQUIRED',
 );
 
-// 16. Human UI confirmation grant
+// 18. Human UI confirmation grant
 const confirmRes = await fetch(`${BASE}/api/v1/sessions/${sessionId}/confirmations`, {
   method: 'POST',
   headers: authHeaders,
@@ -268,7 +315,7 @@ const { confirmation: confRecord, proof } = confirmData.data;
 assert(typeof confRecord.id === 'string', 'Confirmation record has id');
 assert(typeof proof === 'string' && proof.length > 0, 'Single-use proof token issued');
 
-// 17. Protected action execution with proof
+// 19. Protected action execution with proof
 const protectedPerformRes = await fetch(`${BASE}/api/v1/sessions/${sessionId}/protected-actions`, {
   method: 'POST',
   headers: authHeaders,
@@ -287,7 +334,7 @@ assert(
   `Synthetic reference issued (${protectedPerformData.data.reference})`,
 );
 
-// 18. Consumed proof cannot be replayed
+// 20. Consumed proof cannot be replayed
 const replayProofRes = await fetch(`${BASE}/api/v1/sessions/${sessionId}/protected-actions`, {
   method: 'POST',
   headers: authHeaders,
@@ -305,17 +352,18 @@ assert(
   'Reused proof rejected with CONFIRMATION_REQUIRED',
 );
 
-// 19. Export decision receipt
+// 21. Export decision receipt
 const receiptRes = await fetch(`${BASE}/api/v1/sessions/${sessionId}/receipt`, {
   headers: authHeaders,
 });
 assert(receiptRes.status === 200, 'GET /receipt returns 200 OK');
 const receiptData = await receiptRes.json();
+assert(receiptData.ok === true, 'Receipt ok is true');
 const receipt = receiptData.data.receipt;
 assert(receipt.finalVersion === 2, 'Receipt finalVersion matches committed state (v2)');
 assert(Array.isArray(receipt.events) && receipt.events.length > 0, 'Receipt contains audit events');
 
-// 20. Privacy & security validation on exported receipt
+// 22. Privacy & security validation on exported receipt
 const receiptString = JSON.stringify(receipt);
 assert(!receiptString.includes(capability), 'Receipt does NOT contain session capability secret');
 assert(!receiptString.includes(proof), 'Receipt does NOT contain proof tokens');

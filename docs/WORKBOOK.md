@@ -5,7 +5,7 @@
 **Board**: Scrum / Kanban Board  
 **Target Delivery**: Production Readiness & Contest Release  
 **Status**: 🟢 ACTIVE (Sprint 4: Final Verification & Release Hardening)  
-**Last Updated**: 2026-09-03T00:39:00Z
+**Last Updated**: 2026-09-02T22:00:00Z
 
 ---
 
@@ -32,11 +32,10 @@ Deliver an end-to-end working product in production with automated HTTP smoke te
 
 ### Task Board
 
-```
+```text
 +------------------------------------+------------------------------------+------------------------------------+
 | TO DO                              | IN PROGRESS                        | DONE                               |
 +------------------------------------+------------------------------------+------------------------------------+
-|                                    | [HSK-9] End-to-end HTTP smoke test | [HSK-1..8] Foundation through      |
 |                                    | [HSK-10] Playwright E2E browser &  | [HSK-1..8] Foundation through      |
 |                                    | accessibility test suite           | release hardening (Merged to main) |
 |                                    |                                    |                                    |
