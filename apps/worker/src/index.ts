@@ -68,6 +68,11 @@ interface EditBody {
   operations: Operation[];
 }
 
+const SESSION_KEY = 'session';
+const CAPABILITY_HEADER = 'x-handshake-capability';
+const ACTOR_HEADER = 'x-handshake-actor';
+const DEFAULT_ROOM = { widthIn: 108, lengthIn: 132, budgetCents: 1400000 } as const;
+
 /** Maps stable errors to conservative HTTP statuses. */
 function statusFor(code: string): number {
   if (code === 'SESSION_NOT_FOUND' || code === 'PROPOSAL_NOT_FOUND') return 404;
