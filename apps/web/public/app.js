@@ -181,6 +181,7 @@ function selectItem(id) {
     $('move-rotation').value = item.rotation;
   }
   renderCanvas();
+  $('canvas-shell').focus();
 }
 
 function renderCatalog() {
