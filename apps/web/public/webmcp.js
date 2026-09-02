@@ -199,7 +199,7 @@ const tools = [
         ? result({
             ok: true,
             requestId: payload.requestId,
-            data: { evaluation: evaluate(payload.data.state) },
+            data: { evaluation: payload.data.evaluation },
           })
         : result(payload);
     },

@@ -1,6 +1,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import type { AuditEvent, ProtectedAction } from '@handshake/contracts';
 import type { StoredConfirmation } from './evidence';
+import { SYNTHETIC_CATALOG } from './catalog';
 import { buildReceipt, createHumanConfirmation, performProtectedAction } from './protected-runtime';
 import type { ProtectedActionOutcome } from './protected-runtime';
 import { CONTRACT_VERSION, LIMITS } from '@handshake/contracts';
@@ -235,7 +236,10 @@ export class DesignSession extends DurableObject<Env> {
 
     try {
       if (url.pathname === '/state' && request.method === 'GET') {
-        return success(requestId, { state: session.state });
+        return success(requestId, {
+          state: session.state,
+          evaluation: evaluateDesign(session.state, SYNTHETIC_CATALOG),
+        });
       }
       if (url.pathname === '/proposals' && request.method === 'POST') {
         return this.createProposal(request, requestId, session, actor);
@@ -599,7 +603,7 @@ export class DesignSession extends DurableObject<Env> {
     const receipt = buildReceipt(
       session.state.sessionId,
       session.state,
-      evaluateDesign(session.state, []),
+      evaluateDesign(session.state, SYNTHETIC_CATALOG),
       Object.values(session.proposals),
       session,
     );
