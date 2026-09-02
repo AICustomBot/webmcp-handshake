@@ -12,11 +12,13 @@ export interface StoredConfirmation {
   consumedAt?: string;
 }
 
+/** Generates a server-held 256-bit confirmation proof. */
 export function randomProof(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
   return [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
+/** Hashes the exact protected action and payload shown to the human. */
 export async function protectedPayloadHash(
   action: ProtectedAction,
   payload: Record<string, string>,
@@ -24,6 +26,7 @@ export async function protectedPayloadHash(
   return requestHash({ action, payload });
 }
 
+/** Issues a short-lived confirmation whose proof is never publicly serialized. */
 export async function issueConfirmation(
   action: ProtectedAction,
   payload: Record<string, string>,
@@ -39,11 +42,13 @@ export async function issueConfirmation(
   };
 }
 
-export async function verifyConfirmation(
+/** Verifies, consumes, and persists one proof before the protected action runs. */
+export async function consumeConfirmation(
   confirmation: StoredConfirmation | undefined,
   proof: string | undefined,
   action: ProtectedAction,
   payload: Record<string, string>,
+  persist: (value: StoredConfirmation) => Promise<void>,
   now = Date.now(),
 ): Promise<'allowed' | 'required' | 'expired'> {
   if (!confirmation || !proof || confirmation.proof !== proof || confirmation.consumedAt) {
@@ -53,9 +58,13 @@ export async function verifyConfirmation(
     return 'expired';
   }
   const hash = await protectedPayloadHash(action, payload);
-  return confirmation.action === action && confirmation.payloadHash === hash ? 'allowed' : 'required';
+  if (confirmation.action !== action || confirmation.payloadHash !== hash) return 'required';
+  confirmation.consumedAt = new Date(now).toISOString();
+  await persist(confirmation);
+  return 'allowed';
 }
 
+/** Removes secret proof material from exported confirmation evidence. */
 export function publicConfirmation(confirmation: StoredConfirmation) {
   const { proof: _proof, ...safe } = confirmation;
   return safe;
