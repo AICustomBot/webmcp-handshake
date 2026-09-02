@@ -1,4 +1,8 @@
 import { DurableObject } from 'cloudflare:workers';
+import type { AuditEvent, ProtectedAction } from '@handshake/contracts';
+import type { StoredConfirmation } from './evidence';
+import { buildReceipt, createHumanConfirmation, performProtectedAction } from './protected-runtime';
+import type { ProtectedActionOutcome } from './protected-runtime';
 import { CONTRACT_VERSION, LIMITS } from '@handshake/contracts';
 import { parseApiRoute, readBoundedJson } from './runtime-utils';
 export { parseApiRoute, readBoundedJson } from './runtime-utils';
@@ -17,6 +21,7 @@ import {
   mayApplyWithHash,
   mayCreateProposal,
   mayDecide,
+  evaluateDesign,
   proposalHash,
   requestHash,
   statusAfterCommittedChange,
@@ -33,6 +38,9 @@ interface StoredSession {
   state: RoomState;
   proposals: Record<string, Proposal>;
   idempotency: Record<string, IdempotencyRecord>;
+  confirmations: Record<string, StoredConfirmation>;
+  events: AuditEvent[];
+  actionResults: Record<string, ProtectedActionOutcome>;
   createdAt: string;
   expiresAt: string;
 }
@@ -241,6 +249,15 @@ export class DesignSession extends DurableObject<Env> {
       if (url.pathname === '/edits' && request.method === 'POST') {
         return this.edit(request, requestId, session, actor);
       }
+      if (url.pathname === '/confirmations' && request.method === 'POST') {
+        return this.confirm(request, requestId, session, actor);
+      }
+      if (url.pathname === '/protected-actions' && request.method === 'POST') {
+        return this.protectedAction(request, requestId, session, actor);
+      }
+      if (url.pathname === '/receipt' && request.method === 'GET') {
+        return this.receipt(requestId, session);
+      }
       return failure(requestId, 'NOT_IMPLEMENTED', 'Session route is not implemented.');
     } catch (error) {
       const code = error instanceof RangeError ? 'LIMIT_EXCEEDED' : 'INVALID_INPUT';
@@ -286,6 +303,9 @@ export class DesignSession extends DurableObject<Env> {
       },
       proposals: {},
       idempotency: {},
+      confirmations: {},
+      events: [],
+      actionResults: {},
       createdAt: now.toISOString(),
       expiresAt,
     };
@@ -459,6 +479,131 @@ export class DesignSession extends DurableObject<Env> {
     }
     await this.ctx.storage.put(SESSION_KEY, session);
     return success(requestId, { state: session.state });
+  }
+
+  /** Issues one page-owned, session-bound confirmation. */
+  private async confirm(
+    request: Request,
+    requestId: string,
+    session: StoredSession,
+    actor: Actor,
+  ): Promise<Response> {
+    if (actor.kind !== 'human_ui') {
+      return failure(requestId, 'FORBIDDEN_ACTOR', 'Only the page can confirm protected actions.');
+    }
+    const body = (await readBoundedJson(request)) as {
+      action?: ProtectedAction;
+      payload?: Record<string, string>;
+    };
+    if (
+      !['book_consultation', 'request_quote'].includes(body.action ?? '') ||
+      !body.payload ||
+      Array.isArray(body.payload) ||
+      Object.values(body.payload).some((value) => typeof value !== 'string')
+    ) {
+      return failure(
+        requestId,
+        'INVALID_INPUT',
+        'A valid protected action and string payload are required.',
+      );
+    }
+    const result = await createHumanConfirmation(
+      session,
+      session.state.sessionId,
+      session.state.version,
+      body.action!,
+      body.payload,
+    );
+    await this.ctx.storage.put(SESSION_KEY, session);
+    return success(requestId, result, 201);
+  }
+
+  /** Performs one idempotent synthetic action after consuming exact consent. */
+  private async protectedAction(
+    request: Request,
+    requestId: string,
+    session: StoredSession,
+    actor: Actor,
+  ): Promise<Response> {
+    if (actor.kind !== 'agent') {
+      return failure(requestId, 'FORBIDDEN_ACTOR', 'Protected actions use the agent route.');
+    }
+    const body = (await readBoundedJson(request)) as {
+      action?: ProtectedAction;
+      payload?: Record<string, string>;
+      confirmationId?: string;
+      proof?: string;
+      idempotencyKey?: string;
+    };
+    if (
+      !['book_consultation', 'request_quote'].includes(body.action ?? '') ||
+      !body.payload ||
+      Array.isArray(body.payload) ||
+      !body.idempotencyKey ||
+      Object.values(body.payload).some((value) => typeof value !== 'string')
+    ) {
+      return failure(
+        requestId,
+        'INVALID_INPUT',
+        'A valid action, string payload, and idempotency key are required.',
+      );
+    }
+    const digest = await requestHash({
+      action: body.action,
+      payload: body.payload,
+      confirmationId: body.confirmationId,
+    });
+    const replay = checkIdempotency(session.idempotency[body.idempotencyKey], digest);
+    if (replay.outcome === 'conflict') {
+      return failure(requestId, replay.code, 'Idempotency key was reused for another action.');
+    }
+    if (replay.outcome === 'replay') {
+      const stored = session.actionResults[replay.record.resultRef];
+      return stored?.ok
+        ? success(requestId, stored)
+        : failure(requestId, 'POLICY_BLOCKED', 'Stored protected-action result is missing.');
+    }
+    const result = await performProtectedAction(
+      session,
+      session.state.sessionId,
+      session.state.version,
+      {
+        action: body.action!,
+        payload: body.payload,
+        confirmationId: body.confirmationId,
+        proof: body.proof,
+      },
+    );
+    if (!result.ok) {
+      await this.ctx.storage.put(SESSION_KEY, session);
+      return failure(
+        requestId,
+        result.code,
+        'Explicit page confirmation is required for this exact protected action.',
+      );
+    }
+    const resultRef = crypto.randomUUID();
+    session.actionResults[resultRef] = result;
+    session.idempotency[body.idempotencyKey] = {
+      key: body.idempotencyKey,
+      requestHash: digest,
+      resultRef,
+      createdAt: result.performedAt,
+    };
+    await this.ctx.storage.put(SESSION_KEY, session);
+    return success(requestId, result);
+  }
+
+  /** Returns a public allowlisted evidence receipt. */
+  private receipt(requestId: string, session: StoredSession): Response {
+    const receipt = buildReceipt(
+      session.state.sessionId,
+      session.state,
+      evaluateDesign(session.state, []),
+      Object.values(session.proposals),
+      session,
+    );
+    return success(requestId, { receipt });
   }
 
   /** Deletes an expired session; otherwise expires proposals and reschedules. */

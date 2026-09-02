@@ -263,26 +263,18 @@ const tools = [
         action: { type: 'string', enum: ['book_consultation', 'request_quote'] },
         payload: { type: 'object', additionalProperties: { type: 'string' } },
         confirmationId: stringField,
+        proof: stringField,
         idempotencyKey: stringField,
       },
       ['sessionId', 'action', 'payload', 'idempotencyKey'],
     ),
-    execute: async (input) => {
-      authorize(input);
-      return failure(
-        'CONFIRMATION_REQUIRED',
-        'Use the page-owned confirmation flow before retrying this action.',
-      );
-    },
+    execute: async (input) => result(await call('protected-actions', 'POST', input)),
   },
   {
     name: 'get_receipt',
     description: 'Read the exportable decision receipt when available.',
     inputSchema: sessionSchema,
-    execute: async (input) => {
-      authorize(input);
-      return failure('NOT_IMPLEMENTED', 'Receipt generation is introduced in HSK-06.');
-    },
+    execute: async (input) => result(await call('receipt', 'GET', input)),
   },
 ];
 

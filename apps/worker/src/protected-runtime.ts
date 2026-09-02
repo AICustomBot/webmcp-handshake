@@ -1,5 +1,12 @@
 import { CONTRACT_VERSION, LIMITS } from '@handshake/contracts';
-import type { AuditEvent, DesignEvaluation, ProtectedAction, Proposal, Receipt, RoomState } from '@handshake/contracts';
+import type {
+  AuditEvent,
+  DesignEvaluation,
+  ProtectedAction,
+  Proposal,
+  Receipt,
+  RoomState,
+} from '@handshake/contracts';
 import { consumeConfirmation, issueConfirmation, publicConfirmation } from './evidence';
 import type { StoredConfirmation } from './evidence';
 

@@ -64,7 +64,10 @@ export async function consumeConfirmation(
   ) {
     return 'required';
   }
-  if (!Number.isFinite(Date.parse(confirmation.expiresAt)) || Date.parse(confirmation.expiresAt) <= now) {
+  if (
+    !Number.isFinite(Date.parse(confirmation.expiresAt)) ||
+    Date.parse(confirmation.expiresAt) <= now
+  ) {
     return 'expired';
   }
   const hash = await protectedPayloadHash(action, payload);
