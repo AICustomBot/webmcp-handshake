@@ -1,0 +1,16 @@
+name: Implementation slice
+description: One bounded Handshake engineering assignment
+title: 'HSK-: '
+body:
+  - type: textarea
+    id: objective
+    attributes: { label: Objective }
+    validations: { required: true }
+  - type: textarea
+    id: acceptance
+    attributes: { label: Acceptance criteria }
+    validations: { required: true }
+  - type: textarea
+    id: boundaries
+    attributes: { label: Boundaries and prohibited actions }
+    validations: { required: true }

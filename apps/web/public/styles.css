@@ -1,1 +1,150 @@
-:root{font-family:Inter,system-ui,sans-serif;color:#2c2c2b;background:#f9f8f7}*{box-sizing:border-box}body{margin:0}header,footer{display:flex;justify-content:space-between;padding:18px 32px;background:#fff;border-bottom:1px solid #e6e5e3}.tag{font-size:12px;margin-left:10px;padding:4px 8px;border-radius:999px;background:#e5f2fc;color:#185f9e}main{display:grid;grid-template-columns:260px minmax(440px,1fr) 310px;gap:16px;max-width:1400px;margin:auto;padding:24px}aside,.canvas{background:#fff;border:1px solid #e6e5e3;border-radius:12px;padding:20px}input{padding:12px;border:1px solid #ccc;border-radius:8px;width:100%}article{padding:14px 0;border-bottom:1px solid #eee}small{display:block;color:#7d7a75}.section-head{display:flex;justify-content:space-between}.status{color:#23734c}.room{position:relative;max-width:650px;aspect-ratio:11/9;margin:26px auto;background:#fbfaf8;background-image:linear-gradient(#eee 1px,transparent 1px),linear-gradient(90deg,#eee 1px,transparent 1px);background-size:30px 30px;border:5px solid #2c2c2b}.fixture,.proposal{position:absolute;display:grid;place-items:center;border-radius:6px;font-size:13px;font-weight:700}.vanity{left:9%;top:8%;width:34%;height:15%;background:#d9dde2}.shower{right:6%;bottom:7%;width:38%;height:35%;background:#d8e8ed;border:2px solid #7ca6b5}.toilet{left:13%;bottom:12%;width:18%;height:22%;background:#f0efed}.proposal{left:18%;top:30%;width:37%;height:18%;border:3px dashed #d5803b;background:#fbebde;color:#8a4d1e}.metric{display:flex;justify-content:space-between}.check{margin:16px 0;padding:12px;border-radius:8px;background:#fbebde;color:#7d4318}.card{border:1px solid #e6e5e3;border-radius:10px;padding:16px}button{min-height:44px;border:1px solid #d7d5d2;background:#fff;border-radius:8px;padding:8px 12px}.primary{background:#2783de;color:#fff}@media(max-width:900px){main{grid-template-columns:1fr;padding:16px}.canvas{order:-1}}
+:root {
+  font-family: Inter, system-ui, sans-serif;
+  color: #2c2c2b;
+  background: #f9f8f7;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+header,
+footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 18px 32px;
+  background: #fff;
+  border-bottom: 1px solid #e6e5e3;
+}
+.tag {
+  font-size: 12px;
+  margin-left: 10px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #e5f2fc;
+  color: #185f9e;
+}
+main {
+  display: grid;
+  grid-template-columns: 260px minmax(440px, 1fr) 310px;
+  gap: 16px;
+  max-width: 1400px;
+  margin: auto;
+  padding: 24px;
+}
+aside,
+.canvas {
+  background: #fff;
+  border: 1px solid #e6e5e3;
+  border-radius: 12px;
+  padding: 20px;
+}
+input {
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  width: 100%;
+}
+article {
+  padding: 14px 0;
+  border-bottom: 1px solid #eee;
+}
+small {
+  display: block;
+  color: #7d7a75;
+}
+.section-head {
+  display: flex;
+  justify-content: space-between;
+}
+.status {
+  color: #23734c;
+}
+.room {
+  position: relative;
+  max-width: 650px;
+  aspect-ratio: 11/9;
+  margin: 26px auto;
+  background: #fbfaf8;
+  background-image:
+    linear-gradient(#eee 1px, transparent 1px), linear-gradient(90deg, #eee 1px, transparent 1px);
+  background-size: 30px 30px;
+  border: 5px solid #2c2c2b;
+}
+.fixture,
+.proposal {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.vanity {
+  left: 9%;
+  top: 8%;
+  width: 34%;
+  height: 15%;
+  background: #d9dde2;
+}
+.shower {
+  right: 6%;
+  bottom: 7%;
+  width: 38%;
+  height: 35%;
+  background: #d8e8ed;
+  border: 2px solid #7ca6b5;
+}
+.toilet {
+  left: 13%;
+  bottom: 12%;
+  width: 18%;
+  height: 22%;
+  background: #f0efed;
+}
+.proposal {
+  left: 18%;
+  top: 30%;
+  width: 37%;
+  height: 18%;
+  border: 3px dashed #d5803b;
+  background: #fbebde;
+  color: #8a4d1e;
+}
+.metric {
+  display: flex;
+  justify-content: space-between;
+}
+.check {
+  margin: 16px 0;
+  padding: 12px;
+  border-radius: 8px;
+  background: #fbebde;
+  color: #7d4318;
+}
+.card {
+  border: 1px solid #e6e5e3;
+  border-radius: 10px;
+  padding: 16px;
+}
+button {
+  min-height: 44px;
+  border: 1px solid #d7d5d2;
+  background: #fff;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+.primary {
+  background: #2783de;
+  color: #fff;
+}
+@media (max-width: 900px) {
+  main {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+  .canvas {
+    order: -1;
+  }
+}
