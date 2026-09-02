@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Actor, Confirmation, Proposal, RoomState } from '@handshake/contracts';
+import type { Actor, Confirmation, Operation, Proposal, RoomState } from '@handshake/contracts';
 import {
   applyOperations,
   mayCreateProposal,
@@ -41,6 +41,8 @@ const confirmation: Confirmation = {
   createdAt: '2026-09-02T00:00:00Z',
   expiresAt: '2099-01-01T00:00:00Z',
 };
+
+const nextItemId = (index: number) => `i${index}`;
 
 describe('page-owned consent', () => {
   it('lets the human decide a pending proposal', () => {
@@ -187,7 +189,10 @@ describe('staleness and replay', () => {
 
 describe('state reducer', () => {
   it('increments the version exactly once per applied proposal', () => {
-    const result = applyOperations(state, [{ type: 'place', productId: 'vanity-harbor', x: 0, y: 0, rotation: 0 }], (index) => `i${index}`);
+    const operations: Operation[] = [
+      { type: 'place', productId: 'vanity-harbor', x: 0, y: 0, rotation: 0 },
+    ];
+    const result = applyOperations(state, operations, nextItemId);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.state.version).toBe(5);
@@ -195,7 +200,8 @@ describe('state reducer', () => {
   });
 
   it('refuses to touch an item that does not exist', () => {
-    const result = applyOperations(state, [{ type: 'remove', itemId: 'ghost' }], (index) => `i${index}`);
+    const operations: Operation[] = [{ type: 'remove', itemId: 'ghost' }];
+    const result = applyOperations(state, operations, nextItemId);
     expect(result).toEqual({ ok: false, code: 'INVALID_INPUT' });
   });
 });
