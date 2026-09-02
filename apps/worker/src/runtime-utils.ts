@@ -11,7 +11,11 @@ export function parseApiRoute(pathname: string): ApiRoute | null {
   if (match === null) return null;
   const sessionId = match[1];
   if (sessionId === undefined) return null;
-  return { sessionId: decodeURIComponent(sessionId), resource: match[2] ?? '' };
+  try {
+    return { sessionId: decodeURIComponent(sessionId), resource: match[2] ?? '' };
+  } catch {
+    return null;
+  }
 }
 
 /** Reads JSON while enforcing the actual body size, not only Content-Length. */

@@ -1,5 +1,8 @@
 import { DurableObject } from 'cloudflare:workers';
 import { CONTRACT_VERSION, LIMITS } from '@handshake/contracts';
+import { parseApiRoute, readBoundedJson } from './runtime-utils';
+export { parseApiRoute, readBoundedJson } from './runtime-utils';
+export type { ApiRoute } from './runtime-utils';
 import type {
   Actor,
   IdempotencyRecord,
@@ -17,6 +20,7 @@ import {
   proposalHash,
   requestHash,
   statusAfterCommittedChange,
+  validateOperations,
 } from '@handshake/policy';
 
 export interface Env {
@@ -64,24 +68,10 @@ interface EditBody {
   operations: Operation[];
 }
 
-export interface ApiRoute {
-  sessionId: string;
-  resource: string;
-}
-
 const SESSION_KEY = 'session';
 const CAPABILITY_HEADER = 'x-handshake-capability';
 const ACTOR_HEADER = 'x-handshake-actor';
 const DEFAULT_ROOM = { widthIn: 108, lengthIn: 132, budgetCents: 1400000 } as const;
-
-/** Parses a versioned session route without accepting extra path segments. */
-export function parseApiRoute(pathname: string): ApiRoute | null {
-  const match = /^\/api\/v1\/sessions\/([^/]+)(?:\/([^/]+))?$/.exec(pathname);
-  if (match === null) return null;
-  const sessionId = match[1];
-  if (sessionId === undefined) return null;
-  return { sessionId: decodeURIComponent(sessionId), resource: match[2] ?? '' };
-}
 
 /** Maps stable errors to conservative HTTP statuses. */
 function statusFor(code: string): number {
@@ -111,20 +101,6 @@ function success<T>(requestId: string, data: T, status = 200): Response {
 function randomCapability(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
   return [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join('');
-}
-
-/** Reads JSON while enforcing the actual body size, not only Content-Length. */
-export async function readBoundedJson(request: Request): Promise<unknown> {
-  const declared = Number(request.headers.get('content-length') ?? '0');
-  if (Number.isFinite(declared) && declared > LIMITS.maxBodyBytes) {
-    throw new RangeError('Request body exceeds the configured limit.');
-  }
-  const bytes = await request.arrayBuffer();
-  if (bytes.byteLength > LIMITS.maxBodyBytes) {
-    throw new RangeError('Request body exceeds the configured limit.');
-  }
-  if (bytes.byteLength === 0) return {};
-  return JSON.parse(new TextDecoder().decode(bytes)) as unknown;
 }
 
 /** Creates a request with a replayable, size-checked body. */
@@ -160,8 +136,18 @@ export async function routeRequest(request: Request, env: Env): Promise<Response
       const stub = env.DESIGN_SESSION.get(id);
       const internal = new Request('https://session.internal/init', {
         method: 'POST',
-        headers: { 'content-type': 'application/json', 'x-request-id': requestId },
-        body: JSON.stringify({ sessionId, capability, ...body }),
+        headers: {
+          'content-type': 'application/json',
+          'x-request-id': requestId,
+          'x-handshake-internal': 'init',
+        },
+        body: JSON.stringify({
+          widthIn: body.widthIn,
+          lengthIn: body.lengthIn,
+          budgetCents: body.budgetCents,
+          sessionId,
+          capability,
+        }),
       });
       const response = await stub.fetch(internal);
       if (!response.ok) return response;
@@ -174,6 +160,9 @@ export async function routeRequest(request: Request, env: Env): Promise<Response
 
   const route = parseApiRoute(url.pathname);
   if (route === null) return failure(requestId, 'INVALID_INPUT', 'Unknown API route.');
+  if (route.resource === 'init') {
+    return failure(requestId, 'FORBIDDEN_ACTOR', 'Internal route.');
+  }
   if (route.sessionId.length === 0 || route.sessionId.length > 128) {
     return failure(requestId, 'INVALID_INPUT', 'Invalid session identifier.');
   }
@@ -187,7 +176,7 @@ export async function routeRequest(request: Request, env: Env): Promise<Response
     headers.set('x-request-id', requestId);
     headers.set(ACTOR_HEADER, actorFor(route.resource));
     headers.set('x-route-session', route.sessionId);
-    return stub.fetch(new Request(forwarded, { headers }));
+    return await stub.fetch(new Request(forwarded, { headers }));
   } catch (error) {
     const code = error instanceof RangeError ? 'LIMIT_EXCEEDED' : 'INVALID_INPUT';
     return failure(requestId, code, 'Request could not be routed safely.');
@@ -202,10 +191,23 @@ export default {
 export class DesignSession extends DurableObject<Env> {
   /** Handles session state and all atomic mutations. */
   async fetch(request: Request): Promise<Response> {
+    return this.ctx.blockConcurrencyWhile(() => this.handle(request));
+  }
+
+  /** Serializes one complete read-modify-write operation. */
+  private async handle(request: Request): Promise<Response> {
     const url = new URL(request.url);
     const requestId = request.headers.get('x-request-id') ?? crypto.randomUUID();
     if (url.pathname === '/init' && request.method === 'POST') {
-      return this.initialize(request, requestId);
+      if (request.headers.get('x-handshake-internal') !== 'init') {
+        return failure(requestId, 'FORBIDDEN_ACTOR', 'Internal route.');
+      }
+      try {
+        return await this.initialize(request, requestId);
+      } catch (error) {
+        const code = error instanceof RangeError ? 'LIMIT_EXCEEDED' : 'INVALID_INPUT';
+        return failure(requestId, code, 'Session input was invalid.');
+      }
     }
 
     const session = await this.ctx.storage.get<StoredSession>(SESSION_KEY);
@@ -388,9 +390,6 @@ export class DesignSession extends DurableObject<Env> {
     const proposal = session.proposals[body.proposalId];
     if (proposal === undefined)
       return failure(requestId, 'PROPOSAL_NOT_FOUND', 'Proposal not found.');
-    if (body.expectedVersion !== session.state.version) {
-      return failure(requestId, 'VERSION_CONFLICT', 'Committed state changed.');
-    }
     const payloadHash = await requestHash(body);
     const replay = checkIdempotency(session.idempotency[body.idempotencyKey], payloadHash);
     if (replay.outcome === 'replay') {
@@ -398,6 +397,9 @@ export class DesignSession extends DurableObject<Env> {
     }
     if (replay.outcome === 'conflict') {
       return failure(requestId, replay.code, 'Idempotency key was reused with different content.');
+    }
+    if (body.expectedVersion !== session.state.version) {
+      return failure(requestId, 'VERSION_CONFLICT', 'Committed state changed.');
     }
     const decision = await mayApplyWithHash({
       proposal,
@@ -416,6 +418,10 @@ export class DesignSession extends DurableObject<Env> {
     };
     session.state = reduced.state;
     session.proposals[applied.id] = applied;
+    for (const other of Object.values(session.proposals)) {
+      if (other.id === applied.id) continue;
+      other.status = statusAfterCommittedChange(other, session.state.version);
+    }
     session.idempotency[body.idempotencyKey] = {
       key: body.idempotencyKey,
       requestHash: payloadHash,
@@ -438,6 +444,12 @@ export class DesignSession extends DurableObject<Env> {
     const body = (await readBoundedJson(request)) as EditBody;
     if (body.expectedVersion !== session.state.version) {
       return failure(requestId, 'VERSION_CONFLICT', 'Committed state changed.');
+    }
+    const validation = Array.isArray(body.operations)
+      ? validateOperations(body.operations)
+      : { allowed: false as const, code: 'INVALID_INPUT' as const };
+    if (!validation.allowed) {
+      return failure(requestId, validation.code, 'Edit operations were invalid.');
     }
     const reduced = applyOperations(session.state, body.operations, () => crypto.randomUUID());
     if (!reduced.ok) return failure(requestId, reduced.code, 'Edit could not be applied.');
