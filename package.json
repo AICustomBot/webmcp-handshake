@@ -11,7 +11,8 @@
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:smoke": "node scripts/smoke-golden-journey.mjs"
+    "test:smoke": "node scripts/smoke-golden-journey.mjs",
+    "test:e2e": "uv run --with playwright python3 scripts/test-e2e-browser.py"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260902.1",
