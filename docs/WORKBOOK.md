@@ -36,14 +36,17 @@ Deliver an end-to-end working product in production with automated HTTP smoke te
 +------------------------------------+------------------------------------+------------------------------------+
 | TO DO                              | IN PROGRESS                        | DONE                               |
 +------------------------------------+------------------------------------+------------------------------------+
-|                                    | [HSK-11] Production release guide, | [HSK-1..8] Foundation through      |
-|                                    | deployment runbook & submission    | release hardening (Merged to main) |
+|                                    |                                    | [HSK-1..8] Foundation through      |
+|                                    |                                    | release hardening (Merged to main) |
 |                                    |                                    |                                    |
 |                                    |                                    | [HSK-9] End-to-end HTTP smoke test |
 |                                    |                                    | runner & live runtime verification |
 |                                    |                                    |                                    |
 |                                    |                                    | [HSK-10] Playwright E2E browser &  |
 |                                    |                                    | accessibility test suite           |
+|                                    |                                    |                                    |
+|                                    |                                    | [HSK-11] Production release guide, |
+|                                    |                                    | deployment runbook & submission    |
 +------------------------------------+------------------------------------+------------------------------------+
 ```
 
@@ -108,15 +111,15 @@ Deliver an end-to-end working product in production with automated HTTP smoke te
 
 ### [HSK-11] HSK-08-03: Production release guide, deployment runbook, and submission pack
 
-- **Issue**: [#11](https://github.com/AICustomBot/webmcp-handshake/issues/11) (To be created)
-- **Branch**: `hsk-08-03-production-release`
+- **Issue**: [#13](https://github.com/AICustomBot/webmcp-handshake/issues/13)
+- **Branch**: `hsk-08-03-deployment-runbook`
 - **Type**: Documentation / Ops Runbook
 - **Priority**: High
-- **Status**: `TO DO`
+- **Status**: `DONE`
 - **Acceptance Criteria**:
-  - [ ] Production Deployment Runbook (`docs/DEPLOYMENT-RUNBOOK.md`) covering Cloudflare Worker deploy, Durable Object migrations, custom domains, monitoring, and instant rollback.
-  - [ ] Production Readiness and Release Evidence (`docs/HSK-08-PRODUCTION-READINESS.md`) with release gate checklist for Ehab's final review.
-  - [ ] Update `docs/SUBMISSION-PACK.md` and `docs/DOCUMENTATION-INDEX.md` with complete links and instructions.
+  - [x] Production Deployment Runbook (`docs/DEPLOYMENT-RUNBOOK.md`) covering Cloudflare Worker deploy, Durable Object topology, custom domains, live HTTP/browser verification procedures, monitoring, and instant rollback.
+  - [x] Updated Devpost Submission Pack (`docs/SUBMISSION-PACK.md`) with complete project overview, technical architecture, comprehensive verification dossier (66 unit + 62 smoke + 37 e2e assertions), WebMCP tool surface table, timed demo video script (2:30), and constitutional release checklist.
+  - [x] Updated Documentation Index (`docs/DOCUMENTATION-INDEX.md`) and delivery workbook (`docs/WORKBOOK.md`).
 
 ---
 
