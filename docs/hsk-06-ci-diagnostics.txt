@@ -1,0 +1,20 @@
+
+> webmcp-handshake@0.1.0 check /home/runner/work/webmcp-handshake/webmcp-handshake
+> pnpm format:check && pnpm typecheck && pnpm test
+
+
+> webmcp-handshake@0.1.0 format:check /home/runner/work/webmcp-handshake/webmcp-handshake
+> prettier --check .
+
+Checking formatting...
+All matched files use Prettier code style!
+
+> webmcp-handshake@0.1.0 typecheck /home/runner/work/webmcp-handshake/webmcp-handshake
+> tsc --noEmit
+
+apps/worker/src/index.ts(574,7): error TS2379: Argument of type '{ action: ProtectedAction; payload: Record<string, string>; confirmationId: string | undefined; proof: string | undefined; }' is not assignable to parameter of type 'ProtectedActionInput' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'confirmationId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+ ELIFECYCLE  Command failed with exit code 1.
+ ELIFECYCLE  Command failed with exit code 1.
