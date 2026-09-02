@@ -23,6 +23,7 @@ export type ProtectedActionOutcome =
 export async function createHumanConfirmation(
   ledger: EvidenceLedger,
   sessionId: string,
+  version: number,
   action: ProtectedAction,
   payload: Record<string, string>,
   now = new Date(),
@@ -35,7 +36,7 @@ export async function createHumanConfirmation(
     type: 'protected_action_confirmed',
     actor: 'human_ui',
     at: now.toISOString(),
-    version: 0,
+    version,
     detail: `${action} confirmed for exact payload hash.`,
   });
   return { confirmation: publicConfirmation(confirmation), proof: confirmation.proof };
@@ -59,7 +60,10 @@ export async function performProtectedAction(
     input.action,
     input.payload,
     async (consumed) => {
+      const current = ledger.confirmations[consumed.id];
+      if (!current || current.consumedAt) return false;
       ledger.confirmations[consumed.id] = consumed;
+      return true;
     },
     now.getTime(),
   );

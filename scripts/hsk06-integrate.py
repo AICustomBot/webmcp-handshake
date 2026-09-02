@@ -2,7 +2,7 @@ from pathlib import Path
 p=Path('apps/worker/src/index.ts')
 s=p.read_text()
 anchor="import { DurableObject } from 'cloudflare:workers';\n"
-s=s.replace(anchor, anchor+"import type { ProtectedAction } from '@handshake/contracts';\nimport type { StoredConfirmation } from './evidence';\nimport { buildReceipt, createHumanConfirmation, performProtectedAction } from './protected-runtime';\nimport type { EvidenceLedger, ProtectedActionOutcome } from './protected-runtime';\n")
+s=s.replace(anchor, anchor+"import type { AuditEvent, ProtectedAction } from '@handshake/contracts';\nimport type { StoredConfirmation } from './evidence';\nimport { buildReceipt, createHumanConfirmation, performProtectedAction } from './protected-runtime';\nimport type { ProtectedActionOutcome } from './protected-runtime';\n")
 s=s.replace("  idempotency: Record<string, IdempotencyRecord>;\n  updatedAt: string;", "  idempotency: Record<string, IdempotencyRecord>;\n  confirmations: Record<string, StoredConfirmation>;\n  events: AuditEvent[];\n  actionResults: Record<string, ProtectedActionOutcome>;\n  updatedAt: string;")
 s=s.replace("      idempotency: {},\n      updatedAt: now,", "      idempotency: {},\n      confirmations: {},\n      events: [],\n      actionResults: {},\n      updatedAt: now,")
 route="""      if (request.method === 'POST' && route.resource === 'edits') {
@@ -25,12 +25,10 @@ methods="""
   private async confirm(request: Request, actor: Actor, requestId: string): Promise<Response> {
     if (actor.kind !== 'human_ui') return fail(requestId, 'FORBIDDEN_ACTOR', 'Only the page can confirm protected actions.');
     const parsed = await readBoundedJson<{ action?: ProtectedAction; payload?: Record<string, string> }>(request, LIMITS.maxBodyBytes);
-    if (!parsed.ok || !['book_consultation', 'request_quote'].includes(parsed.value.action ?? '') || !parsed.value.payload || Array.isArray(parsed.value.payload)) {
-      return fail(requestId, 'INVALID_INPUT', 'A valid protected action and string payload are required.');
-    }
+    if (!parsed.ok || !['book_consultation', 'request_quote'].includes(parsed.value.action ?? '') || !parsed.value.payload || Array.isArray(parsed.value.payload)) return fail(requestId, 'INVALID_INPUT', 'A valid protected action and string payload are required.');
     if (Object.values(parsed.value.payload).some((value) => typeof value !== 'string')) return fail(requestId, 'INVALID_INPUT', 'Protected action payload values must be strings.');
     const state = await this.load();
-    const result = await createHumanConfirmation(state, state.state.sessionId, parsed.value.action!, parsed.value.payload);
+    const result = await createHumanConfirmation(state, state.state.sessionId, state.state.version, parsed.value.action!, parsed.value.payload);
     state.updatedAt = new Date().toISOString();
     await this.ctx.storage.put(SESSION_KEY, state);
     return ok(requestId, result);

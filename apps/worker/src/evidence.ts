@@ -45,14 +45,14 @@ export async function issueConfirmation(
   };
 }
 
-/** Verifies, consumes, and persists one proof before the protected action runs. */
+/** Verifies and atomically claims one proof before the protected action runs. */
 export async function consumeConfirmation(
   confirmation: StoredConfirmation | undefined,
   proof: string | undefined,
   sessionId: string,
   action: ProtectedAction,
   payload: Record<string, string>,
-  persist: (value: StoredConfirmation) => Promise<void>,
+  claim: (value: StoredConfirmation) => Promise<boolean>,
   now = Date.now(),
 ): Promise<'allowed' | 'required' | 'expired'> {
   if (
@@ -69,8 +69,9 @@ export async function consumeConfirmation(
   }
   const hash = await protectedPayloadHash(action, payload);
   if (confirmation.action !== action || confirmation.payloadHash !== hash) return 'required';
-  confirmation.consumedAt = new Date(now).toISOString();
-  await persist(confirmation);
+  const consumed = { ...confirmation, consumedAt: new Date(now).toISOString() };
+  if (!(await claim(consumed))) return 'required';
+  Object.assign(confirmation, consumed);
   return 'allowed';
 }
 
