@@ -18,8 +18,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: python scripts/hsk06-integrate.py
       - run: pnpm exec prettier --write apps/worker/src apps/web/public/webmcp.js tests
-      - run: pnpm check
-      - run: pnpm exec wrangler deploy --dry-run
       - run: |
           rm scripts/hsk06-integrate.py .github/workflows/hsk-06-integrate.yml
           git config user.name 'github-actions[bot]'
@@ -27,3 +25,5 @@ jobs:
           git add apps/worker/src apps/web/public/webmcp.js tests scripts .github/workflows
           git commit -m 'feat(hsk-06): integrate protected actions and receipts'
           git push
+      - run: pnpm check
+      - run: pnpm exec wrangler deploy --dry-run
