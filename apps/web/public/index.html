@@ -68,20 +68,28 @@
             <g id="proposal-layer"></g>
           </svg>
         </div>
-        <p class="canvas-help">Select an item, then use arrow keys to move it one inch. Hold Shift for six inches.</p>
+        <p class="canvas-help">
+          Select an item, then use arrow keys to move it one inch. Hold Shift for six inches.
+        </p>
 
         <div class="manual-controls" aria-labelledby="manual-title">
           <div>
             <h3 id="manual-title">Manual edit</h3>
             <p class="muted">An accessible alternative to dragging.</p>
           </div>
-          <label>Item <select id="item-select"></select></label>
+          <label
+            >Item
+            <select id="item-select"></select
+          ></label>
           <label>X <input id="move-x" type="number" min="0" max="480" /></label>
           <label>Y <input id="move-y" type="number" min="0" max="480" /></label>
-          <label>Rotation
+          <label
+            >Rotation
             <select id="move-rotation">
-              <option value="0">0°</option><option value="90">90°</option>
-              <option value="180">180°</option><option value="270">270°</option>
+              <option value="0">0°</option>
+              <option value="90">90°</option>
+              <option value="180">180°</option>
+              <option value="270">270°</option>
             </select>
           </label>
           <button id="move-item" type="button">Commit edit</button>
@@ -101,12 +109,18 @@
         <section class="proposal-review" aria-labelledby="review-title">
           <p class="eyebrow">Human decision</p>
           <h2 id="review-title">Proposal review</h2>
-          <div id="proposal-empty" class="empty-state">No proposal is waiting. Create one from a fixture card.</div>
+          <div id="proposal-empty" class="empty-state">
+            No proposal is waiting. Create one from a fixture card.
+          </div>
           <article id="proposal-card" hidden>
-            <div class="proposal-status"><span id="proposal-status"></span><code id="proposal-id"></code></div>
+            <div class="proposal-status">
+              <span id="proposal-status"></span><code id="proposal-id"></code>
+            </div>
             <p id="proposal-rationale"></p>
             <ol id="proposal-diff" class="diff-list"></ol>
-            <p class="consent-note">Nothing changes until you approve, then apply, this exact hash-bound proposal.</p>
+            <p class="consent-note">
+              Nothing changes until you approve, then apply, this exact hash-bound proposal.
+            </p>
             <div class="button-row">
               <button id="approve" class="primary" type="button">Approve exact proposal</button>
               <button id="reject" class="danger" type="button">Reject</button>
@@ -118,7 +132,8 @@
     </main>
 
     <footer>
-      <span>Page-owned decision route</span><span>Versioned writes</span><span>Evidence-ready state</span>
+      <span>Page-owned decision route</span><span>Versioned writes</span
+      ><span>Evidence-ready state</span>
     </footer>
     <script type="module" src="./app.js"></script>
   </body>
