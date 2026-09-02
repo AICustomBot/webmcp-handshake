@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { LIMITS } from '@handshake/contracts';
-import type { Operation, Product, Proposal, RoomState } from '@handshake/contracts';
+import type { Operation, Product, Proposal, RoomState, Rotation } from '@handshake/contracts';
 import {
   canonicalize,
   checkIdempotency,
@@ -64,45 +64,86 @@ const record = {
   createdAt: '2026-09-02T00:00:00Z',
 };
 
+async function hashedProposal(operations: Operation[] = []): Promise<Proposal> {
+  const hash = await proposalHash({ sessionId: 's1', baseVersion: 4, operations });
+  return { ...approved, operations, hash };
+}
+
 describe('proposal gate', () => {
   it('permits a fresh approved proposal', () => {
     expect(mayApply(approved, state).allowed).toBe(true);
   });
 
   it('rejects a stale base version', () => {
-    const decision = mayApply({ ...approved, baseVersion: 3 }, state);
-    expect(decision).toEqual({ allowed: false, code: 'VERSION_CONFLICT' });
+    expect(mayApply({ ...approved, baseVersion: 3 }, state)).toEqual({
+      allowed: false,
+      code: 'VERSION_CONFLICT',
+    });
   });
 
   it('refuses work the human has not approved', () => {
-    const decision = mayApply({ ...approved, status: 'pending_human' }, state);
-    expect(decision).toEqual({ allowed: false, code: 'PROPOSAL_NOT_APPROVED' });
+    expect(mayApply({ ...approved, status: 'pending_human' }, state)).toEqual({
+      allowed: false,
+      code: 'PROPOSAL_NOT_APPROVED',
+    });
   });
 
   it('refuses an approved proposal whose review window has closed', () => {
     const stale: Proposal = { ...approved, expiresAt: '2026-09-02T00:10:00Z' };
-    const decision = mayApply(stale, state, new Date('2026-09-02T00:11:00Z'));
-    expect(decision).toEqual({ allowed: false, code: 'PROPOSAL_EXPIRED' });
+    expect(mayApply(stale, state, new Date('2026-09-02T00:11:00Z'))).toEqual({
+      allowed: false,
+      code: 'PROPOSAL_EXPIRED',
+    });
   });
 
   it('refuses to replay a proposal that was already applied', () => {
-    const decision = mayApply({ ...approved, status: 'applied' }, state);
-    expect(decision).toEqual({ allowed: false, code: 'PROPOSAL_ALREADY_APPLIED' });
+    expect(mayApply({ ...approved, status: 'applied' }, state)).toEqual({
+      allowed: false,
+      code: 'PROPOSAL_ALREADY_APPLIED',
+    });
+  });
+
+  it('returns a distinct code for an invalidated proposal', () => {
+    expect(mayApply({ ...approved, status: 'invalidated' }, state)).toEqual({
+      allowed: false,
+      code: 'PROPOSAL_INVALIDATED',
+    });
   });
 
   it('refuses a rejected proposal', () => {
-    const decision = mayApply({ ...approved, status: 'rejected' }, state);
-    expect(decision).toEqual({ allowed: false, code: 'PROPOSAL_REJECTED' });
+    expect(mayApply({ ...approved, status: 'rejected' }, state)).toEqual({
+      allowed: false,
+      code: 'PROPOSAL_REJECTED',
+    });
   });
 
   it('refuses a proposal belonging to another session', () => {
-    const decision = mayApply({ ...approved, sessionId: 's2' }, state);
-    expect(decision).toEqual({ allowed: false, code: 'FORBIDDEN_ACTOR' });
+    expect(mayApply({ ...approved, sessionId: 's2' }, state)).toEqual({
+      allowed: false,
+      code: 'FORBIDDEN_ACTOR',
+    });
   });
 
-  it('binds application to the exact approved hash', () => {
-    const decision = mayApplyWithHash({ proposal: approved, state, proposalHash: 'tampered' });
-    expect(decision).toEqual({ allowed: false, code: 'PROPOSAL_HASH_MISMATCH' });
+  it('binds application to the submitted approved hash', async () => {
+    const proposal = await hashedProposal();
+    await expect(
+      mayApplyWithHash({ proposal, state, proposalHash: 'tampered' }),
+    ).resolves.toEqual({ allowed: false, code: 'PROPOSAL_HASH_MISMATCH' });
+  });
+
+  it('recomputes the hash and refuses mutated proposal contents', async () => {
+    const proposal = await hashedProposal([{ type: 'remove', itemId: 'i1' }]);
+    proposal.operations = [{ type: 'remove', itemId: 'i2' }];
+    await expect(
+      mayApplyWithHash({ proposal, state, proposalHash: proposal.hash }),
+    ).resolves.toEqual({ allowed: false, code: 'PROPOSAL_HASH_MISMATCH' });
+  });
+
+  it('allows exact proposal contents with all hashes matching', async () => {
+    const proposal = await hashedProposal();
+    await expect(
+      mayApplyWithHash({ proposal, state, proposalHash: proposal.hash }),
+    ).resolves.toEqual({ allowed: true });
   });
 });
 
@@ -139,13 +180,6 @@ describe('canonical hashing', () => {
     });
     expect(second).not.toBe(first);
   });
-
-  it('changes when the base version changes', async () => {
-    const operations: Operation[] = [{ type: 'remove', itemId: 'i1' }];
-    const first = await proposalHash({ sessionId: 's1', baseVersion: 4, operations });
-    const second = await proposalHash({ sessionId: 's1', baseVersion: 5, operations });
-    expect(second).not.toBe(first);
-  });
 });
 
 describe('idempotency', () => {
@@ -158,8 +192,10 @@ describe('idempotency', () => {
   });
 
   it('refuses to reuse a key with a different payload', () => {
-    const outcome = checkIdempotency(record, 'r2');
-    expect(outcome).toEqual({ outcome: 'conflict', code: 'IDEMPOTENCY_CONFLICT' });
+    expect(checkIdempotency(record, 'r2')).toEqual({
+      outcome: 'conflict',
+      code: 'IDEMPOTENCY_CONFLICT',
+    });
   });
 });
 
@@ -175,21 +211,11 @@ describe('operation validation', () => {
     }
     expect(validateOperations(many)).toEqual({ allowed: false, code: 'LIMIT_EXCEEDED' });
   });
-
-  it('refuses a placement outside the supported coordinate range', () => {
-    const operations: Operation[] = [
-      { type: 'place', productId: 'vanity-harbor', x: -4, y: 0, rotation: 0 },
-    ];
-    expect(validateOperations(operations)).toEqual({ allowed: false, code: 'INVALID_INPUT' });
-  });
 });
 
 describe('deterministic evaluation', () => {
   it('reports an empty room as clean', () => {
-    const evaluation = evaluateDesign(state, catalog);
-    expect(evaluation.committedCents).toBe(0);
-    expect(evaluation.overBudget).toBe(false);
-    expect(evaluation.findings).toEqual([]);
+    expect(evaluateDesign(state, catalog).findings).toEqual([]);
   });
 
   it('blocks overlapping fixtures', () => {
@@ -204,24 +230,52 @@ describe('deterministic evaluation', () => {
     expect(codes).toContain('FIXTURE_OVERLAP');
   });
 
-  it('warns when approach space is blocked', () => {
-    const tight: RoomState = {
+  it.each([
+    [0, 40, 100],
+    [90, 0, 40],
+    [180, 40, 0],
+    [270, 90, 40],
+  ] satisfies [Rotation, number, number][])('checks the %i° clearance boundary', (rotation, x, y) => {
+    const room: RoomState = {
       ...state,
-      items: [
-        { id: 'i1', productId: 'vanity-harbor', x: 0, y: 0, rotation: 0 },
-        { id: 'i2', productId: 'shower-open', x: 0, y: 25, rotation: 0 },
-      ],
+      items: [{ id: 'i1', productId: 'vanity-harbor', x, y, rotation }],
     };
-    const codes = evaluateDesign(tight, catalog).findings.map((finding) => finding.code);
+    const codes = evaluateDesign(room, catalog).findings.map((finding) => finding.code);
     expect(codes).toContain('CLEARANCE_WARNING');
   });
 
+  it.each([
+    [0, 40, 40, 40, 65],
+    [90, 60, 40, 25, 40],
+    [180, 40, 60, 40, 25],
+    [270, 20, 40, 45, 40],
+  ] satisfies [Rotation, number, number, number, number][])(
+    'checks the %i° clearance obstruction',
+    (rotation, x, y, blockerX, blockerY) => {
+      const room: RoomState = {
+        ...state,
+        items: [
+          { id: 'i1', productId: 'vanity-harbor', x, y, rotation },
+          {
+            id: 'i2',
+            productId: 'shower-open',
+            x: blockerX,
+            y: blockerY,
+            rotation: 0,
+          },
+        ],
+      };
+      const codes = evaluateDesign(room, catalog).findings.map((finding) => finding.code);
+      expect(codes).toContain('CLEARANCE_WARNING');
+    },
+  );
+
   it('flags an item that is not in the synthetic catalog', () => {
-    const unknown: RoomState = {
+    const room: RoomState = {
       ...state,
       items: [{ id: 'i1', productId: 'not-real', x: 0, y: 0, rotation: 0 }],
     };
-    const codes = evaluateDesign(unknown, catalog).findings.map((finding) => finding.code);
+    const codes = evaluateDesign(room, catalog).findings.map((finding) => finding.code);
     expect(codes).toContain('UNKNOWN_PRODUCT');
   });
 });

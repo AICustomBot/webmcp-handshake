@@ -1,8 +1,9 @@
 # Tool contracts
 
-Frozen at contract version `1.0.0`. The machine-readable source of truth is
-`packages/contracts/src/index.ts`. Where this document and that file disagree,
-the file wins and this document is the defect.
+Frozen at contract version `1.0.0`. Authority follows
+`docs/IMPLEMENTATION-DECISIONS.md`, then `packages/contracts/src/index.ts`, then
+the deterministic policy engine, then documentation, then the UI. If this
+document conflicts with a higher-authority source, this document is the defect.
 
 All data is synthetic. Nothing here represents real pricing, real availability
 or real regulatory requirements.
@@ -51,19 +52,27 @@ directly. That absence is the product.
 `INVALID_INPUT`, `LIMIT_EXCEEDED`, `SESSION_NOT_FOUND`,
 `PROPOSAL_NOT_FOUND`, `VERSION_CONFLICT`, `PROPOSAL_EXPIRED`,
 `PROPOSAL_NOT_APPROVED`, `PROPOSAL_REJECTED`, `PROPOSAL_SUPERSEDED`,
-`PROPOSAL_ALREADY_DECIDED`, `PROPOSAL_ALREADY_APPLIED`,
-`PROPOSAL_HASH_MISMATCH`, `IDEMPOTENCY_CONFLICT`, `CONFIRMATION_REQUIRED`,
-`CONFIRMATION_EXPIRED`, `FORBIDDEN_ACTOR`, `POLICY_BLOCKED`, `RATE_LIMITED`,
-`NOT_IMPLEMENTED`.
+`PROPOSAL_INVALIDATED`, `PROPOSAL_ALREADY_DECIDED`,
+`PROPOSAL_ALREADY_APPLIED`, `PROPOSAL_HASH_MISMATCH`,
+`IDEMPOTENCY_CONFLICT`, `CONFIRMATION_REQUIRED`, `CONFIRMATION_EXPIRED`,
+`FORBIDDEN_ACTOR`, `POLICY_BLOCKED`, `RATE_LIMITED`, `NOT_IMPLEMENTED`.
 
-Five codes were added during HSK-02 to make the surface complete:
-`SESSION_NOT_FOUND`, `PROPOSAL_NOT_FOUND`, `PROPOSAL_ALREADY_DECIDED`,
-`PROPOSAL_ALREADY_APPLIED`, `PROPOSAL_HASH_MISMATCH`, plus `LIMIT_EXCEEDED`,
-`FORBIDDEN_ACTOR` and `RATE_LIMITED`. The original set in
-`docs/IMPLEMENTATION-DECISIONS.md` could not distinguish a replayed apply from
-an unapproved one, which is the exact case the demo has to show.
+Nine codes were added during HSK-02 to make the surface complete:
+`SESSION_NOT_FOUND`, `PROPOSAL_NOT_FOUND`, `PROPOSAL_INVALIDATED`,
+`PROPOSAL_ALREADY_DECIDED`, `PROPOSAL_ALREADY_APPLIED`,
+`PROPOSAL_HASH_MISMATCH`, `LIMIT_EXCEEDED`, `FORBIDDEN_ACTOR` and
+`RATE_LIMITED`. The original set in `docs/IMPLEMENTATION-DECISIONS.md` could
+not distinguish invalidation, a replayed apply or an unapproved proposal,
+which are cases the demo must explain precisely.
 
 A shipped code is never reworded or repurposed. New conditions get new codes.
+
+## Evaluation finding codes
+
+The evaluation response uses a separate closed union:
+`UNKNOWN_PRODUCT`, `OUT_OF_BOUNDS`, `FIXTURE_OVERLAP`, `CLEARANCE_WARNING` and
+`OVER_BUDGET`. Adding a finding requires updating the contract, so clients can
+handle findings exhaustively.
 
 ## Limits
 

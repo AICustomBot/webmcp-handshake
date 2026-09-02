@@ -21,33 +21,36 @@ import type {
   ProtectedAction,
   RoomItem,
   RoomState,
+  Rotation,
   ToolError,
 } from '@handshake/contracts';
 
 export type Decision = { allowed: true } | { allowed: false; code: ErrorCode };
-
-/** Retained name for the proposal gate used by the runtime and its tests. */
 export type ApplyDecision = Decision;
 
+/** Returns a successful policy decision. */
 function allow(): Decision {
   return { allowed: true };
 }
 
+/** Returns a fail-closed policy decision with a stable code. */
 function deny(code: ErrorCode): Decision {
   return { allowed: false, code };
 }
 
+/** Converts a policy failure into the common tool error envelope. */
 export function toToolError(code: ErrorCode, message: string): ToolError {
   return { code, message, retryable: RETRYABLE_ERROR_CODES.includes(code) };
 }
 
-/** An unparseable timestamp is treated as already expired. Fail closed. */
+/** Returns true when a deadline has passed or cannot be parsed. */
 export function isExpired(expiresAt: string, now: Date = new Date()): boolean {
   const expiry = new Date(expiresAt).getTime();
   if (Number.isNaN(expiry)) return true;
   return expiry <= now.getTime();
 }
 
+/** Compares two canonical object keys without locale-dependent behavior. */
 function compareKeys(a: string, b: string): number {
   if (a < b) return -1;
   if (a > b) return 1;
@@ -55,9 +58,8 @@ function compareKeys(a: string, b: string): number {
 }
 
 /**
- * Canonical JSON: sorted keys, dropped undefined members, no incidental
- * whitespace. Two structurally equal payloads always produce one string, so a
- * hash cannot be changed by reordering fields.
+ * Produces sorted-key, whitespace-free JSON for deterministic hashing.
+ * Undefined object members are omitted and non-finite numbers are rejected.
  */
 export function canonicalize(value: unknown): string {
   if (value === null) return 'null';
@@ -66,18 +68,11 @@ export function canonicalize(value: unknown): string {
     if (!Number.isFinite(value)) throw new TypeError('Cannot canonicalize a non-finite number');
     return JSON.stringify(value);
   }
-  if (Array.isArray(value)) {
-    const items: string[] = [];
-    for (const item of value) {
-      items.push(canonicalize(item));
-    }
-    return `[${items.join(',')}]`;
-  }
+  if (Array.isArray(value)) return `[${value.map((item) => canonicalize(item)).join(',')}]`;
   if (typeof value === 'object') {
     const source = value as Record<string, unknown>;
-    const keys = Object.keys(source).sort(compareKeys);
     const parts: string[] = [];
-    for (const key of keys) {
+    for (const key of Object.keys(source).sort(compareKeys)) {
       const child = source[key];
       if (child === undefined) continue;
       parts.push(`${JSON.stringify(key)}:${canonicalize(child)}`);
@@ -87,14 +82,11 @@ export function canonicalize(value: unknown): string {
   throw new TypeError(`Cannot canonicalize a value of type ${typeof value}`);
 }
 
+/** Returns the lowercase SHA-256 digest of a UTF-8 string. */
 export async function sha256Hex(input: string): Promise<string> {
   const bytes = new TextEncoder().encode(input);
   const digest = await crypto.subtle.digest('SHA-256', bytes);
-  const octets: string[] = [];
-  for (const byte of new Uint8Array(digest)) {
-    octets.push(byte.toString(16).padStart(2, '0'));
-  }
-  return octets.join('');
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
 export interface ProposalHashInput {
@@ -103,25 +95,24 @@ export interface ProposalHashInput {
   operations: readonly Operation[];
 }
 
-/**
- * Binds a proposal to its session, its base version and its exact operations.
- * The human approves this hash, and application re-checks it, so an approved
- * proposal cannot be swapped for different work.
- */
+/** Hashes the contract version, session, base version and exact operations. */
 export async function proposalHash(input: ProposalHashInput): Promise<string> {
-  const canonical = canonicalize({
-    contractVersion: CONTRACT_VERSION,
-    sessionId: input.sessionId,
-    baseVersion: input.baseVersion,
-    operations: input.operations,
-  });
-  return sha256Hex(canonical);
+  return sha256Hex(
+    canonicalize({
+      contractVersion: CONTRACT_VERSION,
+      sessionId: input.sessionId,
+      baseVersion: input.baseVersion,
+      operations: input.operations,
+    }),
+  );
 }
 
+/** Hashes a canonicalized idempotent request payload. */
 export async function requestHash(payload: unknown): Promise<string> {
   return sha256Hex(canonicalize(payload));
 }
 
+/** Maps every non-applicable proposal status to its precise stable error. */
 function statusDenial(status: ProposalStatus): Decision {
   switch (status) {
     case 'approved':
@@ -137,35 +128,39 @@ function statusDenial(status: ProposalStatus): Decision {
     case 'superseded':
       return deny('PROPOSAL_SUPERSEDED');
     case 'invalidated':
-      return deny('PROPOSAL_SUPERSEDED');
+      return deny('PROPOSAL_INVALIDATED');
   }
   return deny('POLICY_BLOCKED');
 }
 
+/** Checks whether a coordinate is finite and within the hard room bounds. */
 function isPlacementCoordinate(value: number): boolean {
-  if (!Number.isFinite(value)) return false;
-  return value >= 0 && value <= LIMITS.maxRoomDimensionIn;
+  return Number.isFinite(value) && value >= 0 && value <= LIMITS.maxRoomDimensionIn;
 }
 
+/** Validates an operation list against shape-independent hard limits. */
 export function validateOperations(operations: readonly Operation[]): Decision {
   if (operations.length === 0) return deny('INVALID_INPUT');
   if (operations.length > LIMITS.maxOperationsPerProposal) return deny('LIMIT_EXCEEDED');
   for (const operation of operations) {
     if (operation.type === 'place') {
       if (operation.productId.length === 0) return deny('INVALID_INPUT');
-      if (!isPlacementCoordinate(operation.x)) return deny('INVALID_INPUT');
-      if (!isPlacementCoordinate(operation.y)) return deny('INVALID_INPUT');
+      if (!isPlacementCoordinate(operation.x) || !isPlacementCoordinate(operation.y)) {
+        return deny('INVALID_INPUT');
+      }
       continue;
     }
     if (operation.type === 'move') {
       if (operation.itemId.length === 0) return deny('INVALID_INPUT');
-      if (!isPlacementCoordinate(operation.x)) return deny('INVALID_INPUT');
-      if (!isPlacementCoordinate(operation.y)) return deny('INVALID_INPUT');
+      if (!isPlacementCoordinate(operation.x) || !isPlacementCoordinate(operation.y)) {
+        return deny('INVALID_INPUT');
+      }
       continue;
     }
     if (operation.type === 'swap') {
-      if (operation.itemId.length === 0) return deny('INVALID_INPUT');
-      if (operation.replacementProductId.length === 0) return deny('INVALID_INPUT');
+      if (operation.itemId.length === 0 || operation.replacementProductId.length === 0) {
+        return deny('INVALID_INPUT');
+      }
       continue;
     }
     if (operation.itemId.length === 0) return deny('INVALID_INPUT');
@@ -181,11 +176,7 @@ export interface CreateProposalContext {
   pendingCount: number;
 }
 
-/**
- * Proposing is allowed for an agent because it changes nothing. It still must
- * name the version it reasoned about, so a stale proposal is refused instead
- * of being silently rebased onto newer state.
- */
+/** Authorizes creation of a non-mutating proposal against current state. */
 export function mayCreateProposal(context: CreateProposalContext): Decision {
   if (context.actor.kind === 'system') return deny('FORBIDDEN_ACTOR');
   if (context.actor.sessionId !== context.state.sessionId) return deny('FORBIDDEN_ACTOR');
@@ -201,11 +192,7 @@ export interface DecisionContext {
   now?: Date;
 }
 
-/**
- * The self-approval guard. Only a human acting through the page UI, in the
- * proposal's own session, can decide it, and only against the exact hash that
- * was rendered for review.
- */
+/** Allows only the page UI to decide a fresh, exact pending proposal. */
 export function mayDecide(context: DecisionContext): Decision {
   const now = context.now ?? new Date();
   if (context.actor.kind !== 'human_ui') return deny('FORBIDDEN_ACTOR');
@@ -217,10 +204,7 @@ export function mayDecide(context: DecisionContext): Decision {
   return allow();
 }
 
-/**
- * The mutation gate. Checked immediately before any state change, inside the
- * single-threaded Durable Object, so the version cannot move underneath it.
- */
+/** Checks status, expiry and version immediately before a committed write. */
 export function mayApply(proposal: Proposal, state: RoomState, now: Date = new Date()): Decision {
   if (proposal.sessionId !== state.sessionId) return deny('FORBIDDEN_ACTOR');
   if (proposal.status !== 'approved') return statusDenial(proposal.status);
@@ -236,8 +220,19 @@ export interface ApplyContext {
   now?: Date;
 }
 
-export function mayApplyWithHash(context: ApplyContext): Decision {
-  if (context.proposalHash !== context.proposal.hash) return deny('PROPOSAL_HASH_MISMATCH');
+/**
+ * Recomputes proposal identity and requires the computed, stored and submitted
+ * hashes to match before evaluating the remaining mutation gates.
+ */
+export async function mayApplyWithHash(context: ApplyContext): Promise<Decision> {
+  const computed = await proposalHash({
+    sessionId: context.proposal.sessionId,
+    baseVersion: context.proposal.baseVersion,
+    operations: context.proposal.operations,
+  });
+  if (computed !== context.proposal.hash || computed !== context.proposalHash) {
+    return deny('PROPOSAL_HASH_MISMATCH');
+  }
   return mayApply(context.proposal, context.state, context.now ?? new Date());
 }
 
@@ -246,10 +241,7 @@ export type IdempotencyOutcome =
   | { outcome: 'replay'; record: IdempotencyRecord }
   | { outcome: 'conflict'; code: ErrorCode };
 
-/**
- * A repeated key with an identical payload replays the stored result. A
- * repeated key with a different payload is a conflict, never a new write.
- */
+/** Replays identical requests and rejects a reused key with different content. */
 export function checkIdempotency(
   existing: IdempotencyRecord | undefined,
   requestPayloadHash: string,
@@ -267,10 +259,7 @@ export interface ProtectedActionContext {
   now?: Date;
 }
 
-/**
- * Protected actions require a fresh, unconsumed, single-use confirmation that
- * matches this action and this exact payload. Absent evidence denies.
- */
+/** Requires a fresh, unconsumed confirmation for the exact action and payload. */
 export function mayPerformProtectedAction(context: ProtectedActionContext): Decision {
   const now = context.now ?? new Date();
   const confirmation = context.confirmation;
@@ -283,33 +272,25 @@ export function mayPerformProtectedAction(context: ProtectedActionContext): Deci
   return allow();
 }
 
-/**
- * When committed state moves, any live proposal computed against the old
- * version is superseded rather than rebased. Terminal statuses are untouched.
- */
+/** Supersedes a live proposal when committed state moves away from its base. */
 export function statusAfterCommittedChange(proposal: Proposal, newVersion: number): ProposalStatus {
   if (proposal.status !== 'pending_human' && proposal.status !== 'approved') {
     return proposal.status;
   }
-  if (proposal.baseVersion === newVersion) return proposal.status;
-  return 'superseded';
+  return proposal.baseVersion === newVersion ? proposal.status : 'superseded';
 }
 
-/** Marks a proposal expired once its review window closes. */
+/** Expires a live proposal after its review window closes. */
 export function statusAfterExpiry(proposal: Proposal, now: Date = new Date()): ProposalStatus {
   if (proposal.status !== 'pending_human' && proposal.status !== 'approved') {
     return proposal.status;
   }
-  if (!isExpired(proposal.expiresAt, now)) return proposal.status;
-  return 'expired';
+  return isExpired(proposal.expiresAt, now) ? 'expired' : proposal.status;
 }
 
 export type OperationResult = { ok: true; state: RoomState } | { ok: false; code: ErrorCode };
 
-/**
- * Pure reducer. Produces the next committed state without touching storage,
- * so the same transition can be replayed in a test and in the runtime.
- */
+/** Applies a validated operation list as one pure, versioned state transition. */
 export function applyOperations(
   state: RoomState,
   operations: readonly Operation[],
@@ -359,6 +340,14 @@ interface Footprint {
   bottom: number;
 }
 
+interface PlacedItem {
+  id: string;
+  box: Footprint;
+  clearanceIn: number;
+  rotation: Rotation;
+}
+
+/** Returns the rotated floor footprint of an item. */
 function footprint(item: RoomItem, product: Product): Footprint {
   const rotated = item.rotation === 90 || item.rotation === 270;
   const width = rotated ? product.depthIn : product.widthIn;
@@ -366,23 +355,57 @@ function footprint(item: RoomItem, product: Product): Footprint {
   return { left: item.x, top: item.y, right: item.x + width, bottom: item.y + depth };
 }
 
+/** Returns whether two open-edged floor rectangles overlap. */
 function overlaps(a: Footprint, b: Footprint): boolean {
   if (a.right <= b.left || b.right <= a.left) return false;
-  if (a.bottom <= b.top || b.bottom <= a.top) return false;
-  return true;
+  return !(a.bottom <= b.top || b.bottom <= a.top);
 }
 
+/** Returns whether a rectangle lies entirely inside the room. */
 function fitsInsideRoom(state: RoomState, box: Footprint): boolean {
   if (box.left < 0 || box.top < 0) return false;
   return box.right <= state.widthIn && box.bottom <= state.lengthIn;
 }
 
-interface PlacedItem {
-  id: string;
-  box: Footprint;
-  clearanceIn: number;
+/**
+ * Returns the product-defined approach strip in front of a rotated fixture.
+ * Front directions are: 0 down, 90 left, 180 up and 270 right.
+ */
+function clearanceFootprint(entry: PlacedItem): Footprint {
+  const { box, clearanceIn } = entry;
+  switch (entry.rotation) {
+    case 0:
+      return {
+        left: box.left,
+        top: box.bottom,
+        right: box.right,
+        bottom: box.bottom + clearanceIn,
+      };
+    case 90:
+      return {
+        left: box.left - clearanceIn,
+        top: box.top,
+        right: box.left,
+        bottom: box.bottom,
+      };
+    case 180:
+      return {
+        left: box.left,
+        top: box.top - clearanceIn,
+        right: box.right,
+        bottom: box.top,
+      };
+    case 270:
+      return {
+        left: box.right,
+        top: box.top,
+        right: box.right + clearanceIn,
+        bottom: box.bottom,
+      };
+  }
 }
 
+/** Finds fixture footprint collisions. */
 function findOverlapFindings(placed: readonly PlacedItem[]): CheckFinding[] {
   const findings: CheckFinding[] = [];
   for (let i = 0; i < placed.length; i += 1) {
@@ -390,8 +413,7 @@ function findOverlapFindings(placed: readonly PlacedItem[]): CheckFinding[] {
     if (first === undefined) continue;
     for (let j = i + 1; j < placed.length; j += 1) {
       const second = placed[j];
-      if (second === undefined) continue;
-      if (!overlaps(first.box, second.box)) continue;
+      if (second === undefined || !overlaps(first.box, second.box)) continue;
       findings.push({
         code: 'FIXTURE_OVERLAP',
         severity: 'blocked',
@@ -403,21 +425,13 @@ function findOverlapFindings(placed: readonly PlacedItem[]): CheckFinding[] {
   return findings;
 }
 
-/**
- * Demonstration clearance only. These findings express the product's own
- * layout preferences for the demo and are not code or accessibility advice.
- */
+/** Finds product-preference clearance boundary and obstruction warnings. */
 function findClearanceFindings(state: RoomState, placed: readonly PlacedItem[]): CheckFinding[] {
   const findings: CheckFinding[] = [];
   for (const entry of placed) {
     if (entry.clearanceIn <= 0) continue;
-    const strip: Footprint = {
-      left: entry.box.left,
-      top: entry.box.bottom,
-      right: entry.box.right,
-      bottom: entry.box.bottom + entry.clearanceIn,
-    };
-    if (strip.bottom > state.lengthIn) {
+    const strip = clearanceFootprint(entry);
+    if (!fitsInsideRoom(state, strip)) {
       findings.push({
         code: 'CLEARANCE_WARNING',
         severity: 'warning',
@@ -427,8 +441,7 @@ function findClearanceFindings(state: RoomState, placed: readonly PlacedItem[]):
       continue;
     }
     for (const other of placed) {
-      if (other.id === entry.id) continue;
-      if (!overlaps(strip, other.box)) continue;
+      if (other.id === entry.id || !overlaps(strip, other.box)) continue;
       findings.push({
         code: 'CLEARANCE_WARNING',
         severity: 'warning',
@@ -441,16 +454,9 @@ function findClearanceFindings(state: RoomState, placed: readonly PlacedItem[]):
   return findings;
 }
 
-/**
- * The only source of cost and layout findings. The agent never computes these
- * numbers; it reads them, so the page stays the authority on what is true.
- */
+/** Evaluates deterministic synthetic cost, bounds, overlap and clearance rules. */
 export function evaluateDesign(state: RoomState, catalog: readonly Product[]): DesignEvaluation {
-  const products = new Map<string, Product>();
-  for (const product of catalog) {
-    products.set(product.id, product);
-  }
-
+  const products = new Map(catalog.map((product) => [product.id, product]));
   const findings: CheckFinding[] = [];
   const placed: PlacedItem[] = [];
   let committedCents = 0;
@@ -468,7 +474,12 @@ export function evaluateDesign(state: RoomState, catalog: readonly Product[]): D
     }
     committedCents += product.priceCents;
     const box = footprint(item, product);
-    placed.push({ id: item.id, box, clearanceIn: product.clearanceIn });
+    placed.push({
+      id: item.id,
+      box,
+      clearanceIn: product.clearanceIn,
+      rotation: item.rotation,
+    });
     if (!fitsInsideRoom(state, box)) {
       findings.push({
         code: 'OUT_OF_BOUNDS',
@@ -479,13 +490,7 @@ export function evaluateDesign(state: RoomState, catalog: readonly Product[]): D
     }
   }
 
-  for (const finding of findOverlapFindings(placed)) {
-    findings.push(finding);
-  }
-  for (const finding of findClearanceFindings(state, placed)) {
-    findings.push(finding);
-  }
-
+  findings.push(...findOverlapFindings(placed), ...findClearanceFindings(state, placed));
   const overBudget = committedCents > state.budgetCents;
   if (overBudget) {
     findings.push({

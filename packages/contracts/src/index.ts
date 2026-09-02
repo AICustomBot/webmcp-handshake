@@ -43,6 +43,7 @@ export const ERROR_CODES = [
   'PROPOSAL_NOT_APPROVED',
   'PROPOSAL_REJECTED',
   'PROPOSAL_SUPERSEDED',
+  'PROPOSAL_INVALIDATED',
   'PROPOSAL_ALREADY_DECIDED',
   'PROPOSAL_ALREADY_APPLIED',
   'PROPOSAL_HASH_MISMATCH',
@@ -63,6 +64,7 @@ export type ErrorCode = (typeof ERROR_CODES)[number];
  */
 export const RETRYABLE_ERROR_CODES: readonly ErrorCode[] = ['RATE_LIMITED'];
 
+/** Returns whether an unknown value is a stable Handshake error code. */
 export function isErrorCode(value: unknown): value is ErrorCode {
   if (typeof value !== 'string') return false;
   return (ERROR_CODES as readonly string[]).includes(value);
@@ -201,8 +203,18 @@ export interface Confirmation {
 
 export type CheckSeverity = 'info' | 'warning' | 'blocked';
 
+export const CHECK_FINDING_CODES = [
+  'UNKNOWN_PRODUCT',
+  'OUT_OF_BOUNDS',
+  'FIXTURE_OVERLAP',
+  'CLEARANCE_WARNING',
+  'OVER_BUDGET',
+] as const;
+
+export type CheckFindingCode = (typeof CHECK_FINDING_CODES)[number];
+
 export interface CheckFinding {
-  code: string;
+  code: CheckFindingCode;
   severity: CheckSeverity;
   message: string;
   itemIds: string[];
