@@ -58,6 +58,7 @@ const CATALOG = [
 
 const registered = [];
 const proposalCache = new Map();
+const confirmationGrants = new Map();
 const objectSchema = (properties, required = []) => ({
   type: 'object',
   properties,
@@ -108,6 +109,23 @@ async function call(resource, method, input) {
 async function roomState(input) {
   return call('state', 'GET', input);
 }
+
+function confirmationKey(input) {
+  const payload = Object.fromEntries(
+    Object.entries(input.payload).sort(([a], [b]) => a.localeCompare(b)),
+  );
+  return JSON.stringify([input.sessionId, input.action, payload]);
+}
+
+window.addEventListener('handshake:confirmation-granted', (event) => {
+  const detail = event.detail;
+  if (detail?.key && detail.confirmationId && detail.proof) {
+    confirmationGrants.set(detail.key, {
+      confirmationId: detail.confirmationId,
+      proof: detail.proof,
+    });
+  }
+});
 
 function evaluate(state) {
   let committedCents = 0;
@@ -199,7 +217,7 @@ const tools = [
         ? result({
             ok: true,
             requestId: payload.requestId,
-            data: { evaluation: evaluate(payload.data.state) },
+            data: { evaluation: payload.data.evaluation },
           })
         : result(payload);
     },
@@ -262,27 +280,34 @@ const tools = [
         sessionId: stringField,
         action: { type: 'string', enum: ['book_consultation', 'request_quote'] },
         payload: { type: 'object', additionalProperties: { type: 'string' } },
-        confirmationId: stringField,
         idempotencyKey: stringField,
       },
       ['sessionId', 'action', 'payload', 'idempotencyKey'],
     ),
     execute: async (input) => {
-      authorize(input);
-      return failure(
-        'CONFIRMATION_REQUIRED',
-        'Use the page-owned confirmation flow before retrying this action.',
-      );
+      const key = confirmationKey(input);
+      const grant = confirmationGrants.get(key);
+      const payload = await call('protected-actions', 'POST', { ...input, ...grant });
+      if (payload.ok) confirmationGrants.delete(key);
+      if (
+        !payload.ok &&
+        ['CONFIRMATION_REQUIRED', 'CONFIRMATION_EXPIRED'].includes(payload.error?.code)
+      ) {
+        confirmationGrants.delete(key);
+        window.dispatchEvent(
+          new CustomEvent('handshake:confirmation-requested', {
+            detail: { key, action: input.action, payload: input.payload },
+          }),
+        );
+      }
+      return result(payload);
     },
   },
   {
     name: 'get_receipt',
     description: 'Read the exportable decision receipt when available.',
     inputSchema: sessionSchema,
-    execute: async (input) => {
-      authorize(input);
-      return failure('NOT_IMPLEMENTED', 'Receipt generation is introduced in HSK-06.');
-    },
+    execute: async (input) => result(await call('receipt', 'GET', input)),
   },
 ];
 

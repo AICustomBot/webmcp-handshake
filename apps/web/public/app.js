@@ -33,7 +33,15 @@ const PRODUCTS = [
   },
 ];
 
-const app = { sessionId: '', capability: '', state: null, proposal: null, selectedId: '', zoom: 1 };
+const app = {
+  sessionId: '',
+  capability: '',
+  state: null,
+  proposal: null,
+  selectedId: '',
+  zoom: 1,
+  pendingConfirmation: null,
+};
 const $ = (id) => document.getElementById(id);
 const money = (cents) =>
   new Intl.NumberFormat('en-US', {
@@ -374,6 +382,59 @@ function handle(error) {
   if (error.code === 'VERSION_CONFLICT') refresh().catch(() => {});
 }
 
+function showConfirmation(event) {
+  const detail = event.detail;
+  if (!detail || !['book_consultation', 'request_quote'].includes(detail.action)) return;
+  app.pendingConfirmation = detail;
+  $('confirmation-action').textContent = detail.action;
+  $('confirmation-payload').textContent = JSON.stringify(detail.payload, null, 2);
+  $('confirmation-dialog').showModal();
+  $('confirm-action').focus();
+}
+
+async function confirmProtectedAction() {
+  const pending = app.pendingConfirmation;
+  if (!pending) return;
+  try {
+    const data = await api('confirmations', 'POST', {
+      action: pending.action,
+      payload: pending.payload,
+    });
+    window.dispatchEvent(
+      new CustomEvent('handshake:confirmation-granted', {
+        detail: {
+          key: pending.key,
+          confirmationId: data.confirmation.id,
+          proof: data.proof,
+        },
+      }),
+    );
+    $('confirmation-dialog').close('confirmed');
+    app.pendingConfirmation = null;
+    announce('Exact action confirmed. The agent may retry it once.');
+  } catch (error) {
+    handle(error);
+  }
+}
+
+async function downloadReceipt() {
+  try {
+    const data = await api('receipt');
+    const blob = new Blob([JSON.stringify(data.receipt, null, 2)], {
+      type: 'application/json',
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `handshake-receipt-${app.sessionId}.json`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    announce('Decision receipt downloaded.');
+  } catch (error) {
+    handle(error);
+  }
+}
+
 function nudge(event) {
   if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key) || !app.selectedId)
     return;
@@ -406,6 +467,12 @@ async function boot() {
   }
 }
 
+window.addEventListener('handshake:confirmation-requested', showConfirmation);
+$('confirm-action').addEventListener('click', confirmProtectedAction);
+$('confirmation-dialog').addEventListener('close', () => {
+  if ($('confirmation-dialog').returnValue !== 'confirmed') app.pendingConfirmation = null;
+});
+$('download-receipt').addEventListener('click', downloadReceipt);
 $('catalog-search').addEventListener('input', renderCatalog);
 $('item-select').addEventListener('change', (event) => selectItem(event.target.value));
 $('move-item').addEventListener('click', moveSelected);
