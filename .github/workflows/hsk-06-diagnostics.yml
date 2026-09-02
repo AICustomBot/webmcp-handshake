@@ -1,7 +1,0 @@
-name: HSK-06 diagnostics disabled
-on: workflow_dispatch
-jobs:
-  disabled:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo disabled

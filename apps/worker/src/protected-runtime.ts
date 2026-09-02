@@ -18,8 +18,8 @@ export interface EvidenceLedger {
 export interface ProtectedActionInput {
   action: ProtectedAction;
   payload: Record<string, string>;
-  confirmationId?: string;
-  proof?: string;
+  confirmationId?: string | undefined;
+  proof?: string | undefined;
 }
 
 export type ProtectedActionOutcome =
