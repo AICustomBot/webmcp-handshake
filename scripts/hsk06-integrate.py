@@ -3,70 +3,145 @@ p=Path('apps/worker/src/index.ts')
 s=p.read_text()
 anchor="import { DurableObject } from 'cloudflare:workers';\n"
 s=s.replace(anchor, anchor+"import type { AuditEvent, ProtectedAction } from '@handshake/contracts';\nimport type { StoredConfirmation } from './evidence';\nimport { buildReceipt, createHumanConfirmation, performProtectedAction } from './protected-runtime';\nimport type { ProtectedActionOutcome } from './protected-runtime';\n")
-s=s.replace("  idempotency: Record<string, IdempotencyRecord>;\n  updatedAt: string;", "  idempotency: Record<string, IdempotencyRecord>;\n  confirmations: Record<string, StoredConfirmation>;\n  events: AuditEvent[];\n  actionResults: Record<string, ProtectedActionOutcome>;\n  updatedAt: string;")
-s=s.replace("      idempotency: {},\n      updatedAt: now,", "      idempotency: {},\n      confirmations: {},\n      events: [],\n      actionResults: {},\n      updatedAt: now,")
-route="""      if (request.method === 'POST' && route.resource === 'edits') {
-        return this.edit(request, actor, requestId);
+s=s.replace("  idempotency: Record<string, IdempotencyRecord>;\n  createdAt: string;", "  idempotency: Record<string, IdempotencyRecord>;\n  confirmations: Record<string, StoredConfirmation>;\n  events: AuditEvent[];\n  actionResults: Record<string, ProtectedActionOutcome>;\n  createdAt: string;")
+s=s.replace("      idempotency: {},\n      createdAt: now.toISOString(),", "      idempotency: {},\n      confirmations: {},\n      events: [],\n      actionResults: {},\n      createdAt: now.toISOString(),")
+s=s.replace("  mayDecide,\n  proposalHash,", "  mayDecide,\n  evaluateDesign,\n  proposalHash,")
+route="""      if (url.pathname === '/edits' && request.method === 'POST') {
+        return this.edit(request, requestId, session, actor);
       }
 """
-added=route+"""      if (request.method === 'POST' && route.resource === 'confirmations') {
-        return this.confirm(request, actor, requestId);
+added=route+"""      if (url.pathname === '/confirmations' && request.method === 'POST') {
+        return this.confirm(request, requestId, session, actor);
       }
-      if (request.method === 'POST' && route.resource === 'protected-actions') {
-        return this.protectedAction(request, actor, requestId);
+      if (url.pathname === '/protected-actions' && request.method === 'POST') {
+        return this.protectedAction(request, requestId, session, actor);
       }
-      if (request.method === 'GET' && route.resource === 'receipt') {
-        return this.receipt(requestId);
+      if (url.pathname === '/receipt' && request.method === 'GET') {
+        return this.receipt(requestId, session);
       }
 """
 if route not in s: raise SystemExit('route anchor missing')
 s=s.replace(route,added)
 methods="""
-  private async confirm(request: Request, actor: Actor, requestId: string): Promise<Response> {
-    if (actor.kind !== 'human_ui') return fail(requestId, 'FORBIDDEN_ACTOR', 'Only the page can confirm protected actions.');
-    const parsed = await readBoundedJson<{ action?: ProtectedAction; payload?: Record<string, string> }>(request, LIMITS.maxBodyBytes);
-    if (!parsed.ok || !['book_consultation', 'request_quote'].includes(parsed.value.action ?? '') || !parsed.value.payload || Array.isArray(parsed.value.payload)) return fail(requestId, 'INVALID_INPUT', 'A valid protected action and string payload are required.');
-    if (Object.values(parsed.value.payload).some((value) => typeof value !== 'string')) return fail(requestId, 'INVALID_INPUT', 'Protected action payload values must be strings.');
-    const state = await this.load();
-    const result = await createHumanConfirmation(state, state.state.sessionId, state.state.version, parsed.value.action!, parsed.value.payload);
-    state.updatedAt = new Date().toISOString();
-    await this.ctx.storage.put(SESSION_KEY, state);
-    return ok(requestId, result);
+  /** Issues one page-owned, session-bound confirmation. */
+  private async confirm(
+    request: Request,
+    requestId: string,
+    session: StoredSession,
+    actor: Actor,
+  ): Promise<Response> {
+    if (actor.kind !== 'human_ui') {
+      return failure(requestId, 'FORBIDDEN_ACTOR', 'Only the page can confirm protected actions.');
+    }
+    const body = (await readBoundedJson(request)) as {
+      action?: ProtectedAction;
+      payload?: Record<string, string>;
+    };
+    if (
+      !['book_consultation', 'request_quote'].includes(body.action ?? '') ||
+      !body.payload ||
+      Array.isArray(body.payload) ||
+      Object.values(body.payload).some((value) => typeof value !== 'string')
+    ) {
+      return failure(requestId, 'INVALID_INPUT', 'A valid protected action and string payload are required.');
+    }
+    const result = await createHumanConfirmation(
+      session,
+      session.state.sessionId,
+      session.state.version,
+      body.action!,
+      body.payload,
+    );
+    await this.ctx.storage.put(SESSION_KEY, session);
+    return success(requestId, result, 201);
   }
 
-  private async protectedAction(request: Request, actor: Actor, requestId: string): Promise<Response> {
-    if (actor.kind !== 'agent') return fail(requestId, 'FORBIDDEN_ACTOR', 'Protected actions are requested through the agent tool.');
-    const parsed = await readBoundedJson<{ action?: ProtectedAction; payload?: Record<string, string>; confirmationId?: string; proof?: string; idempotencyKey?: string }>(request, LIMITS.maxBodyBytes);
-    const body = parsed.ok ? parsed.value : undefined;
-    if (!body || !['book_consultation', 'request_quote'].includes(body.action ?? '') || !body.payload || Array.isArray(body.payload) || !body.idempotencyKey || Object.values(body.payload).some((value) => typeof value !== 'string')) return fail(requestId, 'INVALID_INPUT', 'A valid action, string payload, and idempotency key are required.');
-    const state = await this.load();
-    const digest = await requestHash({ action: body.action, payload: body.payload, confirmationId: body.confirmationId });
-    const prior = checkIdempotency(state.idempotency[body.idempotencyKey], digest);
-    if (prior.outcome === 'conflict') return fail(requestId, prior.code, 'The idempotency key was reused for a different action.');
-    if (prior.outcome === 'replay') {
-      const stored = state.actionResults[prior.record.resultRef];
-      return stored?.ok ? ok(requestId, stored) : fail(requestId, 'POLICY_BLOCKED', 'Stored protected-action result is unavailable.');
+  /** Performs one idempotent synthetic action after consuming exact consent. */
+  private async protectedAction(
+    request: Request,
+    requestId: string,
+    session: StoredSession,
+    actor: Actor,
+  ): Promise<Response> {
+    if (actor.kind !== 'agent') {
+      return failure(requestId, 'FORBIDDEN_ACTOR', 'Protected actions use the agent route.');
     }
-    const result = await performProtectedAction(state, state.state.sessionId, state.state.version, { action: body.action!, payload: body.payload, confirmationId: body.confirmationId, proof: body.proof });
-    state.updatedAt = new Date().toISOString();
+    const body = (await readBoundedJson(request)) as {
+      action?: ProtectedAction;
+      payload?: Record<string, string>;
+      confirmationId?: string;
+      proof?: string;
+      idempotencyKey?: string;
+    };
+    if (
+      !['book_consultation', 'request_quote'].includes(body.action ?? '') ||
+      !body.payload ||
+      Array.isArray(body.payload) ||
+      !body.idempotencyKey ||
+      Object.values(body.payload).some((value) => typeof value !== 'string')
+    ) {
+      return failure(requestId, 'INVALID_INPUT', 'A valid action, string payload, and idempotency key are required.');
+    }
+    const digest = await requestHash({
+      action: body.action,
+      payload: body.payload,
+      confirmationId: body.confirmationId,
+    });
+    const replay = checkIdempotency(session.idempotency[body.idempotencyKey], digest);
+    if (replay.outcome === 'conflict') {
+      return failure(requestId, replay.code, 'Idempotency key was reused for another action.');
+    }
+    if (replay.outcome === 'replay') {
+      const stored = session.actionResults[replay.record.resultRef];
+      return stored?.ok
+        ? success(requestId, stored)
+        : failure(requestId, 'POLICY_BLOCKED', 'Stored protected-action result is missing.');
+    }
+    const result = await performProtectedAction(
+      session,
+      session.state.sessionId,
+      session.state.version,
+      {
+        action: body.action!,
+        payload: body.payload,
+        confirmationId: body.confirmationId,
+        proof: body.proof,
+      },
+    );
     if (!result.ok) {
-      await this.ctx.storage.put(SESSION_KEY, state);
-      return fail(requestId, result.code, 'Explicit page confirmation is required for this exact protected action.');
+      await this.ctx.storage.put(SESSION_KEY, session);
+      return failure(
+        requestId,
+        result.code,
+        'Explicit page confirmation is required for this exact protected action.',
+      );
     }
     const resultRef = crypto.randomUUID();
-    state.actionResults[resultRef] = result;
-    state.idempotency[body.idempotencyKey] = { key: body.idempotencyKey, requestHash: digest, resultRef, createdAt: state.updatedAt };
-    await this.ctx.storage.put(SESSION_KEY, state);
-    return ok(requestId, result);
+    session.actionResults[resultRef] = result;
+    session.idempotency[body.idempotencyKey] = {
+      key: body.idempotencyKey,
+      requestHash: digest,
+      resultRef,
+      createdAt: result.performedAt,
+    };
+    await this.ctx.storage.put(SESSION_KEY, session);
+    return success(requestId, result);
   }
 
-  private async receipt(requestId: string): Promise<Response> {
-    const state = await this.load();
-    return ok(requestId, { receipt: buildReceipt(state.state.sessionId, state.state, evaluateDesign(state.state, CATALOG), Object.values(state.proposals), state) });
+  /** Returns a public allowlisted evidence receipt. */
+  private receipt(requestId: string, session: StoredSession): Response {
+    const receipt = buildReceipt(
+      session.state.sessionId,
+      session.state,
+      evaluateDesign(session.state, []),
+      Object.values(session.proposals),
+      session,
+    );
+    return success(requestId, { receipt });
   }
 
 """
-anchor2="  private async load(): Promise<StoredSession> {"
+anchor2="  /** Deletes an expired session; otherwise expires proposals and reschedules. */"
 if anchor2 not in s: raise SystemExit('method anchor missing')
 s=s.replace(anchor2,methods+anchor2)
 p.write_text(s)
