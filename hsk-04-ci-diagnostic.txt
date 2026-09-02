@@ -1,0 +1,31 @@
+
+> webmcp-handshake@0.1.0 check /home/runner/work/webmcp-handshake/webmcp-handshake
+> pnpm format:check && pnpm typecheck && pnpm test
+
+
+> webmcp-handshake@0.1.0 format:check /home/runner/work/webmcp-handshake/webmcp-handshake
+> prettier --check .
+
+Checking formatting...
+All matched files use Prettier code style!
+
+> webmcp-handshake@0.1.0 typecheck /home/runner/work/webmcp-handshake/webmcp-handshake
+> tsc --noEmit
+
+apps/worker/src/index.ts(172,17): error TS2304: Cannot find name 'ACTOR_HEADER'.
+apps/worker/src/index.ts(208,63): error TS2304: Cannot find name 'SESSION_KEY'.
+apps/worker/src/index.ts(214,29): error TS2304: Cannot find name 'CAPABILITY_HEADER'.
+apps/worker/src/index.ts(219,33): error TS2304: Cannot find name 'ACTOR_HEADER'.
+apps/worker/src/index.ts(248,64): error TS2304: Cannot find name 'SESSION_KEY'.
+apps/worker/src/index.ts(255,37): error TS2304: Cannot find name 'DEFAULT_ROOM'.
+apps/worker/src/index.ts(256,39): error TS2304: Cannot find name 'DEFAULT_ROOM'.
+apps/worker/src/index.ts(257,45): error TS2304: Cannot find name 'DEFAULT_ROOM'.
+apps/worker/src/index.ts(287,32): error TS2304: Cannot find name 'SESSION_KEY'.
+apps/worker/src/index.ts(350,32): error TS2304: Cannot find name 'SESSION_KEY'.
+apps/worker/src/index.ts(374,32): error TS2304: Cannot find name 'SESSION_KEY'.
+apps/worker/src/index.ts(426,32): error TS2304: Cannot find name 'SESSION_KEY'.
+apps/worker/src/index.ts(455,32): error TS2304: Cannot find name 'SESSION_KEY'.
+apps/worker/src/index.ts(461,63): error TS2304: Cannot find name 'SESSION_KEY'.
+apps/worker/src/index.ts(476,32): error TS2304: Cannot find name 'SESSION_KEY'.
+ ELIFECYCLE  Command failed with exit code 1.
+ ELIFECYCLE  Command failed with exit code 1.
