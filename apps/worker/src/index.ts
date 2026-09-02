@@ -2,6 +2,7 @@ import { DurableObject } from 'cloudflare:workers';
 import type { AuditEvent, ProtectedAction } from '@handshake/contracts';
 import type { StoredConfirmation } from './evidence';
 import { SYNTHETIC_CATALOG } from './catalog';
+import { healthResponse } from './health';
 import { buildReceipt, createHumanConfirmation, performProtectedAction } from './protected-runtime';
 import type { ProtectedActionOutcome } from './protected-runtime';
 import { CONTRACT_VERSION, LIMITS } from '@handshake/contracts';
@@ -133,6 +134,7 @@ function actorFor(resource: string): Actor['kind'] {
 /** Handles static assets, session creation, and capability-preserving DO routing. */
 export async function routeRequest(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
+  if (url.pathname === '/healthz') return healthResponse(request);
   if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
 
   const requestId = crypto.randomUUID();
