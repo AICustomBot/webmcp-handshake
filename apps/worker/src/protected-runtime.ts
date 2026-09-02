@@ -1,12 +1,5 @@
 import { CONTRACT_VERSION, LIMITS } from '@handshake/contracts';
-import type {
-  AuditEvent,
-  DesignEvaluation,
-  ProtectedAction,
-  Proposal,
-  Receipt,
-  RoomState,
-} from '@handshake/contracts';
+import type { AuditEvent, DesignEvaluation, ProtectedAction, Proposal, Receipt, RoomState } from '@handshake/contracts';
 import { consumeConfirmation, issueConfirmation, publicConfirmation } from './evidence';
 import type { StoredConfirmation } from './evidence';
 
@@ -34,7 +27,7 @@ export async function createHumanConfirmation(
   payload: Record<string, string>,
   now = new Date(),
 ): Promise<{ confirmation: ReturnType<typeof publicConfirmation>; proof: string }> {
-  const confirmation = await issueConfirmation(action, payload, now);
+  const confirmation = await issueConfirmation(sessionId, action, payload, now);
   ledger.confirmations[confirmation.id] = confirmation;
   appendEvent(ledger, {
     id: crypto.randomUUID(),
@@ -62,6 +55,7 @@ export async function performProtectedAction(
   const outcome = await consumeConfirmation(
     confirmation,
     input.proof,
+    sessionId,
     input.action,
     input.payload,
     async (consumed) => {

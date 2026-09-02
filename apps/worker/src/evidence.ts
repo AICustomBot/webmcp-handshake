@@ -4,6 +4,7 @@ import { requestHash } from '@handshake/policy';
 
 export interface StoredConfirmation {
   id: string;
+  sessionId: string;
   proof: string;
   action: ProtectedAction;
   payloadHash: string;
@@ -28,12 +29,14 @@ export async function protectedPayloadHash(
 
 /** Issues a short-lived confirmation whose proof is never publicly serialized. */
 export async function issueConfirmation(
+  sessionId: string,
   action: ProtectedAction,
   payload: Record<string, string>,
   now = new Date(),
 ): Promise<StoredConfirmation> {
   return {
     id: crypto.randomUUID(),
+    sessionId,
     proof: randomProof(),
     action,
     payloadHash: await protectedPayloadHash(action, payload),
@@ -46,18 +49,22 @@ export async function issueConfirmation(
 export async function consumeConfirmation(
   confirmation: StoredConfirmation | undefined,
   proof: string | undefined,
+  sessionId: string,
   action: ProtectedAction,
   payload: Record<string, string>,
   persist: (value: StoredConfirmation) => Promise<void>,
   now = Date.now(),
 ): Promise<'allowed' | 'required' | 'expired'> {
-  if (!confirmation || !proof || confirmation.proof !== proof || confirmation.consumedAt) {
+  if (
+    !confirmation ||
+    !proof ||
+    confirmation.proof !== proof ||
+    confirmation.sessionId !== sessionId ||
+    confirmation.consumedAt
+  ) {
     return 'required';
   }
-  if (
-    !Number.isFinite(Date.parse(confirmation.expiresAt)) ||
-    Date.parse(confirmation.expiresAt) <= now
-  ) {
+  if (!Number.isFinite(Date.parse(confirmation.expiresAt)) || Date.parse(confirmation.expiresAt) <= now) {
     return 'expired';
   }
   const hash = await protectedPayloadHash(action, payload);
