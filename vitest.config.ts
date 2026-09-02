@@ -8,6 +8,7 @@ export default defineConfig({
     alias: {
       '@handshake/contracts': fromRoot('./packages/contracts/src/index.ts'),
       '@handshake/policy': fromRoot('./packages/policy/src/index.ts'),
+      'cloudflare:workers': fromRoot('./tests/cloudflare-workers-stub.ts'),
     },
   },
   test: {

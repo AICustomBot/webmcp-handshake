@@ -13,7 +13,7 @@ The release branch runs a frozen install, formatting check, TypeScript validatio
 
 ## Health and boundary verification
 
-`GET /healthz` returns only the service name and contract version. Non-GET methods are rejected. Request-limit tests include an actual oversized `ReadableStream` without a `Content-Length` header.
+`GET /healthz` returns only public liveness metadata: `ok`, the service name, and the contract version. Non-GET methods are rejected. A route-level test proves the health response bypasses static assets. Request-limit tests include an actual oversized `ReadableStream` without a `Content-Length` header.
 
 ## Evidence still requiring a deployed candidate or supported browser
 
