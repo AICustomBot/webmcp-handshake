@@ -22,3 +22,5 @@ Both actions are synthetic demonstrations. No real appointment, purchase, quote,
 ## Verification
 
 The automated suite covers exact matching, action/payload/session mismatch, missing proof, expiration, replay, concurrent consumption, audit versioning, and proof redaction. Repository CI also runs formatting, TypeScript checks, unit tests, and a Wrangler dry run.
+
+The final validation run is triggered only after generated integration code and temporary diagnostics have been removed from the branch.
