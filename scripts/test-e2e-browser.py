@@ -15,6 +15,11 @@ passed = []
 step = 0
 
 def assert_check(condition, message):
+    """Asserts a test condition, records progress, and raises AssertionError on failure.
+
+    :param condition: The boolean condition to assert.
+    :param message: Diagnostic description of the assertion.
+    """
     global step
     step += 1
     if not condition:
