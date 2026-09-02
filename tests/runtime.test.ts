@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { LIMITS } from '@handshake/contracts';
-import { parseApiRoute, readBoundedJson } from '../apps/worker/src/index';
+import { parseApiRoute, readBoundedJson } from '../apps/worker/src/runtime-utils';
 
 /** Exercises the outer runtime boundary without requiring a deployed Worker. */
 describe('same-origin API router', () => {
