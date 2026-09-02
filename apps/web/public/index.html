@@ -3,51 +3,123 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light" />
     <link rel="stylesheet" href="./styles.css" />
     <title>Handshake — Design together. Approve with proof.</title>
   </head>
   <body>
-    <header>
-      <div><b>Handshake</b><span class="tag">Synthetic demo</span></div>
-      <p>Design together. Approve with proof.</p>
-    </header>
-    <main>
-      <aside>
-        <h2>Fixture catalog</h2>
-        <input aria-label="Search catalog" placeholder="matte black vanity" />
-        <article><b>Harbor vanity</b><small>Matte black · $2,480</small></article>
-        <article><b>Open-entry shower</b><small>Accessible tag · $4,900</small></article>
-      </aside>
-      <section class="canvas">
-        <div class="section-head">
-          <div>
-            <h1>9 × 11 bathroom</h1>
-            <p>Committed design · Version 4</p>
-          </div>
-          <span class="status">● WebMCP ready</span>
+    <a class="skip-link" href="#studio">Skip to studio</a>
+    <header class="topbar">
+      <div>
+        <div class="brand-row">
+          <strong class="brand">Handshake</strong>
+          <span class="badge">Synthetic demo</span>
         </div>
-        <div class="room" role="img" aria-label="Room plan with pending vanity move">
-          <div class="fixture vanity">Vanity</div>
-          <div class="fixture shower">Shower</div>
-          <div class="fixture toilet">WC</div>
-          <div class="proposal">Pending move<br /><b>30 in left</b></div>
+        <p>Design together. Approve with proof.</p>
+      </div>
+      <div class="session-state">
+        <span id="connection-dot" class="dot" aria-hidden="true"></span>
+        <span id="connection-label">Starting secure session…</span>
+      </div>
+    </header>
+
+    <div id="status" class="status-region" role="status" aria-live="polite"></div>
+    <div id="error" class="error-region" role="alert" hidden></div>
+
+    <main id="studio" class="studio">
+      <aside class="panel catalog-panel" aria-labelledby="catalog-title">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Synthetic catalog</p>
+            <h1 id="catalog-title">Fixtures</h1>
+          </div>
+          <span id="catalog-count" class="count">4</span>
+        </div>
+        <label class="search-label" for="catalog-search">Search fixtures</label>
+        <input id="catalog-search" type="search" placeholder="matte black vanity" />
+        <div id="catalog-list" class="catalog-list"></div>
+      </aside>
+
+      <section class="panel canvas-panel" aria-labelledby="room-title">
+        <div class="panel-heading room-heading">
+          <div>
+            <p class="eyebrow">Committed state</p>
+            <h2 id="room-title">9 × 11 bathroom</h2>
+            <p id="version-label" class="muted">Version —</p>
+          </div>
+          <div class="zoom-controls" aria-label="Canvas zoom">
+            <button id="zoom-out" type="button" aria-label="Zoom out">−</button>
+            <output id="zoom-label">100%</output>
+            <button id="zoom-in" type="button" aria-label="Zoom in">+</button>
+          </div>
+        </div>
+
+        <div id="canvas-shell" class="canvas-shell" tabindex="0">
+          <svg id="room-canvas" role="img" aria-labelledby="canvas-title canvas-description">
+            <title id="canvas-title">Shared room canvas</title>
+            <desc id="canvas-description">Committed fixtures and a dashed proposal preview.</desc>
+            <defs>
+              <pattern id="grid" width="12" height="12" patternUnits="userSpaceOnUse">
+                <path d="M 12 0 L 0 0 0 12" fill="none" stroke="#e5e7eb" stroke-width="0.6" />
+              </pattern>
+            </defs>
+            <rect class="room-floor" x="0" y="0" width="108" height="132" />
+            <g id="committed-layer"></g>
+            <g id="proposal-layer"></g>
+          </svg>
+        </div>
+        <p class="canvas-help">Select an item, then use arrow keys to move it one inch. Hold Shift for six inches.</p>
+
+        <div class="manual-controls" aria-labelledby="manual-title">
+          <div>
+            <h3 id="manual-title">Manual edit</h3>
+            <p class="muted">An accessible alternative to dragging.</p>
+          </div>
+          <label>Item <select id="item-select"></select></label>
+          <label>X <input id="move-x" type="number" min="0" max="480" /></label>
+          <label>Y <input id="move-y" type="number" min="0" max="480" /></label>
+          <label>Rotation
+            <select id="move-rotation">
+              <option value="0">0°</option><option value="90">90°</option>
+              <option value="180">180°</option><option value="270">270°</option>
+            </select>
+          </label>
+          <button id="move-item" type="button">Commit edit</button>
         </div>
       </section>
-      <aside>
-        <h2>Budget & checks</h2>
-        <div class="metric"><span>Committed</span><b>$11,420</b></div>
-        <div class="check">
-          <b>Clearance warning</b><span>28 in measured · 60 in demo goal</span>
-        </div>
-        <h2>Pending proposal</h2>
-        <div class="card">
-          <h3>Move vanity 30 in left</h3>
-          <p>No committed state changes until you decide.</p>
-          <button class="primary">Approve</button><button>Reject</button>
-        </div>
+
+      <aside class="panel review-panel" aria-labelledby="review-title">
+        <section>
+          <p class="eyebrow">Deterministic checks</p>
+          <h2>Budget & layout</h2>
+          <div class="budget-row"><span>Committed</span><strong id="budget-total">$0</strong></div>
+          <div class="budget-track"><span id="budget-fill"></span></div>
+          <p id="budget-copy" class="muted"></p>
+          <ul id="findings" class="findings"></ul>
+        </section>
+
+        <section class="proposal-review" aria-labelledby="review-title">
+          <p class="eyebrow">Human decision</p>
+          <h2 id="review-title">Proposal review</h2>
+          <div id="proposal-empty" class="empty-state">No proposal is waiting. Create one from a fixture card.</div>
+          <article id="proposal-card" hidden>
+            <div class="proposal-status"><span id="proposal-status"></span><code id="proposal-id"></code></div>
+            <p id="proposal-rationale"></p>
+            <ol id="proposal-diff" class="diff-list"></ol>
+            <p class="consent-note">Nothing changes until you approve, then apply, this exact hash-bound proposal.</p>
+            <div class="button-row">
+              <button id="approve" class="primary" type="button">Approve exact proposal</button>
+              <button id="reject" class="danger" type="button">Reject</button>
+              <button id="apply" type="button" hidden>Apply approved change</button>
+            </div>
+          </article>
+        </section>
       </aside>
     </main>
-    <footer>Page-owned consent · Structured tools · Evidence receipts</footer>
+
+    <footer>
+      <span>Page-owned decision route</span><span>Versioned writes</span><span>Evidence-ready state</span>
+    </footer>
     <script type="module" src="./app.js"></script>
   </body>
 </html>
