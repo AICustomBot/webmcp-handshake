@@ -18,8 +18,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: python scripts/hsk06-exact-optional.py
       - run: pnpm exec prettier --write apps/worker/src apps/web/public/webmcp.js tests
-      - run: pnpm check
-      - run: pnpm exec wrangler deploy --dry-run
       - run: |
           rm scripts/hsk06-exact-optional.py .github/workflows/hsk-06-exact-optional.yml .github/workflows/hsk-06-diagnostics.yml docs/hsk-06-ci-diagnostics.txt
           git config user.name 'github-actions[bot]'
@@ -27,3 +25,5 @@ jobs:
           git add apps/worker/src apps/web/public/webmcp.js tests scripts .github/workflows docs
           git commit -m 'fix(hsk-06): validate optional proof fields'
           git push
+      - run: pnpm check
+      - run: pnpm exec wrangler deploy --dry-run
