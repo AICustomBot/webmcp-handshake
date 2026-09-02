@@ -86,3 +86,18 @@ Read: `get_room_state`, `search_catalog`, `get_product_detail`, `get_budget_stat
 ## 9. Verification and boundaries
 
 Owner-run verification: `pnpm check`, `npx wrangler deploy --dry-run`, and a live `wrangler dev` smoke of the golden journey over the real HTTP API before handoff. Deployment, repository publication, video and Devpost submission remain gated on Ehab's release review (HSK-07/08).
+
+## 10. Implementation record (2 September 2026)
+
+| Check                      | Command                                                  | Result                                                       |
+| -------------------------- | -------------------------------------------------------- | ------------------------------------------------------------ |
+| Unit + integration tests   | `pnpm test`                                              | 56 passed (contracts, geometry, policy, session core)        |
+| Format + typecheck + tests | `pnpm check`                                             | Exit 0                                                       |
+| Worker build               | `CI=true npx wrangler deploy --dry-run`                  | Pass, 42.40 KiB upload; `DESIGN_SESSION` + `ASSETS` resolved |
+| Live golden journey        | `wrangler dev` + `node scripts/smoke-golden-journey.mjs` | 14/14 assertions over real HTTP                              |
+
+The live smoke caught and fixed one integration defect the unit suite could not see: the Worker
+unwrapped the `GET /__meta` envelope incorrectly, so every capability check failed with
+`ORIGIN_DENIED`. Fixed and re-verified. Audit trail captured by the journey: `session_created`,
+`proposal_created`, `proposal_approved`, `proposal_applied`, `manual_edit`,
+`protected_confirmation_required`, `protected_confirmed`, `protected_action_completed`.

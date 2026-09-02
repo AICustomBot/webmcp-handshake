@@ -47,7 +47,8 @@ export default {
     const stub = env.DESIGN_SESSION.get(env.DESIGN_SESSION.idFromString(sessionId));
     const metaRes = await stub.fetch(new Request('https://do.internal/__meta'));
     if (!metaRes.ok) return apiError(404, 'SESSION_EXPIRED', 'session does not exist or expired');
-    const meta = (await metaRes.json()) as SessionMeta | null;
+    const metaEnvelope = (await metaRes.json()) as ToolResult<SessionMeta> | null;
+    const meta = metaEnvelope && metaEnvelope.ok ? metaEnvelope.data : null;
     if (!meta) return apiError(404, 'SESSION_EXPIRED', 'session does not exist or expired');
 
     const capability = request.headers.get('x-handshake-capability');
