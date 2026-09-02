@@ -20,9 +20,11 @@ identity is explicitly outside this hackathon scope.
 
 ## Atomicity
 
-Cloudflare serializes requests to one Durable Object. Every proposal, decision,
-apply and direct edit reads and writes the one `session` storage record inside
-that object. Expected-version checks happen immediately before mutation.
+Cloudflare storage input gates protect outstanding storage operations, but body
+reads and hashing can otherwise interleave. `DesignSession.fetch` therefore wraps
+each complete read-modify-write in `blockConcurrencyWhile`. Expected-version and
+idempotency checks run inside that serialized operation immediately before the
+mutation is persisted.
 
 Proposal application revalidates status, expiry, version and all three hashes.
 The state reducer increments committed version exactly once. A retry with the

@@ -21,6 +21,10 @@ describe('same-origin API router', () => {
       resource: 'state',
     });
   });
+
+  it('fails closed on malformed percent encoding', () => {
+    expect(parseApiRoute('/api/v1/sessions/%zz/state')).toBeNull();
+  });
 });
 
 describe('body limits and safe failures', () => {
