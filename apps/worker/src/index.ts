@@ -181,7 +181,7 @@ export async function routeRequest(request: Request, env: Env): Promise<Response
   try {
     const id = env.DESIGN_SESSION.idFromName(route.sessionId);
     const stub = env.DESIGN_SESSION.get(id);
-    const internalUrl = `https://session.internal/${encodeURIComponent(route.resource)}`;
+    const internalUrl = 'https:' + '//session.internal/' + encodeURIComponent(route.resource);
     const forwarded = await boundedRequest(request, internalUrl);
     const headers = new Headers(forwarded.headers);
     headers.set('x-request-id', requestId);
@@ -249,7 +249,8 @@ export class DesignSession extends DurableObject<Env> {
   /** Creates the session exactly once and installs its cleanup alarm. */
   private async initialize(request: Request, requestId: string): Promise<Response> {
     const existing = await this.ctx.storage.get<StoredSession>(SESSION_KEY);
-    if (existing !== undefined) return failure(requestId, 'IDEMPOTENCY_CONFLICT', 'Already initialized.');
+    if (existing !== undefined)
+      return failure(requestId, 'IDEMPOTENCY_CONFLICT', 'Already initialized.');
     const body = (await readBoundedJson(request)) as CreateSessionBody & {
       sessionId: string;
       capability: string;
@@ -319,7 +320,8 @@ export class DesignSession extends DurableObject<Env> {
         (proposal) => proposal.status === 'pending_human',
       ).length,
     });
-    if (!decision.allowed) return failure(requestId, decision.code, 'Proposal was denied by policy.');
+    if (!decision.allowed)
+      return failure(requestId, decision.code, 'Proposal was denied by policy.');
     if (typeof body.rationale !== 'string' || typeof body.idempotencyKey !== 'string') {
       return failure(requestId, 'INVALID_INPUT', 'Proposal metadata is invalid.');
     }
@@ -361,9 +363,11 @@ export class DesignSession extends DurableObject<Env> {
   ): Promise<Response> {
     const body = (await readBoundedJson(request)) as DecisionBody;
     const proposal = session.proposals[body.proposalId];
-    if (proposal === undefined) return failure(requestId, 'PROPOSAL_NOT_FOUND', 'Proposal not found.');
+    if (proposal === undefined)
+      return failure(requestId, 'PROPOSAL_NOT_FOUND', 'Proposal not found.');
     const decision = mayDecide({ proposal, actor, proposalHash: body.proposalHash });
-    if (!decision.allowed) return failure(requestId, decision.code, 'Decision was denied by policy.');
+    if (!decision.allowed)
+      return failure(requestId, decision.code, 'Decision was denied by policy.');
     const next: Proposal = {
       ...proposal,
       status: body.outcome === 'approve' ? 'approved' : 'rejected',
@@ -382,7 +386,8 @@ export class DesignSession extends DurableObject<Env> {
   ): Promise<Response> {
     const body = (await readBoundedJson(request)) as ApplyBody;
     const proposal = session.proposals[body.proposalId];
-    if (proposal === undefined) return failure(requestId, 'PROPOSAL_NOT_FOUND', 'Proposal not found.');
+    if (proposal === undefined)
+      return failure(requestId, 'PROPOSAL_NOT_FOUND', 'Proposal not found.');
     if (body.expectedVersion !== session.state.version) {
       return failure(requestId, 'VERSION_CONFLICT', 'Committed state changed.');
     }
@@ -399,7 +404,8 @@ export class DesignSession extends DurableObject<Env> {
       state: session.state,
       proposalHash: body.proposalHash,
     });
-    if (!decision.allowed) return failure(requestId, decision.code, 'Application was denied by policy.');
+    if (!decision.allowed)
+      return failure(requestId, decision.code, 'Application was denied by policy.');
     const reduced = applyOperations(session.state, proposal.operations, () => crypto.randomUUID());
     if (!reduced.ok) return failure(requestId, reduced.code, 'Operations could not be applied.');
     const applied: Proposal = {
@@ -427,7 +433,8 @@ export class DesignSession extends DurableObject<Env> {
     session: StoredSession,
     actor: Actor,
   ): Promise<Response> {
-    if (actor.kind !== 'human_ui') return failure(requestId, 'FORBIDDEN_ACTOR', 'Human route required.');
+    if (actor.kind !== 'human_ui')
+      return failure(requestId, 'FORBIDDEN_ACTOR', 'Human route required.');
     const body = (await readBoundedJson(request)) as EditBody;
     if (body.expectedVersion !== session.state.version) {
       return failure(requestId, 'VERSION_CONFLICT', 'Committed state changed.');
