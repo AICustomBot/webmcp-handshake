@@ -36,11 +36,14 @@ Deliver an end-to-end working product in production with automated HTTP smoke te
 +------------------------------------+------------------------------------+------------------------------------+
 | TO DO                              | IN PROGRESS                        | DONE                               |
 +------------------------------------+------------------------------------+------------------------------------+
-|                                    | [HSK-10] Playwright E2E browser &  | [HSK-1..8] Foundation through      |
-|                                    | accessibility test suite           | release hardening (Merged to main) |
+|                                    | [HSK-11] Production release guide, | [HSK-1..8] Foundation through      |
+|                                    | deployment runbook & submission    | release hardening (Merged to main) |
 |                                    |                                    |                                    |
-| [HSK-11] Production release guide, |                                    | [HSK-9] End-to-end HTTP smoke test |
-| deployment runbook & submission    |                                    | runner & live runtime verification |
+|                                    |                                    | [HSK-9] End-to-end HTTP smoke test |
+|                                    |                                    | runner & live runtime verification |
+|                                    |                                    |                                    |
+|                                    |                                    | [HSK-10] Playwright E2E browser &  |
+|                                    |                                    | accessibility test suite           |
 +------------------------------------+------------------------------------+------------------------------------+
 ```
 
@@ -57,7 +60,7 @@ Deliver an end-to-end working product in production with automated HTTP smoke te
 - **Status**: `DONE`
 - **Acceptance Criteria**:
   - [x] Standalone script `scripts/smoke-golden-journey.mjs` verifying the complete golden journey over HTTP against any target (default: `http://127.0.0.1:8787`).
-  - [x] Validates 57 assertions over real HTTP:
+  - [x] Validates 62 assertions over real HTTP:
     1. Public `/healthz` liveness check (status 200, contract metadata).
     2. Non-GET `/healthz` rejection (status 405).
     3. Session creation (`POST /api/v1/sessions`) with random 128-bit capability and room version 0.
@@ -76,21 +79,21 @@ Deliver an end-to-end working product in production with automated HTTP smoke te
     16. Protected action completion with proof succeeds, returning synthetic reference ID.
     17. Receipt export (`GET /api/v1/sessions/:id/receipt`) contains complete sanitized audit log and no secrets.
   - [x] Added `pnpm test:smoke` command in `package.json`.
-  - [x] Tested live against local `wrangler dev` background instance (57/57 passed).
+  - [x] Tested live against local `wrangler dev` background instance (62/62 passed).
 
 ---
 
 ### [HSK-10] HSK-08-02: Playwright end-to-end browser & accessibility test suite
 
-- **Issue**: [#10](https://github.com/AICustomBot/webmcp-handshake/issues/10) (To be created)
-- **Branch**: `hsk-08-02-e2e-browser`
+- **Issue**: [#11](https://github.com/AICustomBot/webmcp-handshake/issues/11)
+- **Branch**: `hsk-08-02-browser-verification`
 - **Type**: Story / Automated Testing
 - **Priority**: High
-- **Status**: `TO DO`
+- **Status**: `DONE`
 - **Acceptance Criteria**:
-  - [ ] Playwright test suite in `tests/e2e/studio.spec.ts`.
-  - [ ] Verifies full user journey in real browser:
-    - Studio page loads, connection status turns connected.
+  - [x] Playwright test suite in `scripts/test-e2e-browser.py` and `pnpm test:e2e`.
+  - [x] Verifies full user journey in real browser (37/37 assertions pass):
+    - Studio page loads, connection status turns connected ('Session isolated').
     - SVG canvas renders dimensions (9 × 11 ft / 108 × 132 in).
     - Fixture catalog search and filtering works.
     - Proposal cards display with exact diff and status.
@@ -98,8 +101,8 @@ Deliver an end-to-end working product in production with automated HTTP smoke te
     - Manual coordinate edit and keyboard arrow manipulation.
     - Protected action modal displays exact action name and payload for human consent.
     - Receipt download triggers valid JSON payload without secrets.
-    - WebMCP tools registration verification.
-    - Accessibility audit (skip link, ARIA live region, dialog focus management).
+    - WebMCP tools registration verification (8 tools registered).
+    - Accessibility audit (skip link, ARIA live region, dialog focus management, 375px responsive layout).
 
 ---
 
