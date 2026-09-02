@@ -78,6 +78,7 @@ describe('protected action evidence', () => {
         action,
         payload,
         acceptClaim,
+        Date.parse('2026-09-02T12:01:00Z'),
       ),
     ).toBe('required');
     expect(
@@ -88,6 +89,7 @@ describe('protected action evidence', () => {
         action,
         { fixture: 'other' },
         acceptClaim,
+        Date.parse('2026-09-02T12:01:00Z'),
       ),
     ).toBe('required');
     expect(
@@ -101,6 +103,7 @@ describe('protected action evidence', () => {
         action,
         payload,
         acceptClaim,
+        Date.parse('2026-09-02T12:01:00Z'),
       ),
     ).toBe('required');
     expect(
