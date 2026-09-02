@@ -269,8 +269,7 @@ export interface ToolError {
 }
 
 export type ToolResult<T> =
-  | { ok: true; requestId: string; data: T }
-  | { ok: false; requestId: string; error: ToolError };
+  { ok: true; requestId: string; data: T } | { ok: false; requestId: string; error: ToolError };
 
 /**
  * The complete agent-callable tool surface. Approval and confirmation are

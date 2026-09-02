@@ -126,9 +126,10 @@ describe('proposal gate', () => {
 
   it('binds application to the submitted approved hash', async () => {
     const proposal = await hashedProposal();
-    await expect(
-      mayApplyWithHash({ proposal, state, proposalHash: 'tampered' }),
-    ).resolves.toEqual({ allowed: false, code: 'PROPOSAL_HASH_MISMATCH' });
+    await expect(mayApplyWithHash({ proposal, state, proposalHash: 'tampered' })).resolves.toEqual({
+      allowed: false,
+      code: 'PROPOSAL_HASH_MISMATCH',
+    });
   });
 
   it('recomputes the hash and refuses mutated proposal contents', async () => {
@@ -235,14 +236,17 @@ describe('deterministic evaluation', () => {
     [90, 0, 40],
     [180, 40, 0],
     [270, 90, 40],
-  ] satisfies [Rotation, number, number][])('checks the %i° clearance boundary', (rotation, x, y) => {
-    const room: RoomState = {
-      ...state,
-      items: [{ id: 'i1', productId: 'vanity-harbor', x, y, rotation }],
-    };
-    const codes = evaluateDesign(room, catalog).findings.map((finding) => finding.code);
-    expect(codes).toContain('CLEARANCE_WARNING');
-  });
+  ] satisfies [Rotation, number, number][])(
+    'checks the %i° clearance boundary',
+    (rotation, x, y) => {
+      const room: RoomState = {
+        ...state,
+        items: [{ id: 'i1', productId: 'vanity-harbor', x, y, rotation }],
+      };
+      const codes = evaluateDesign(room, catalog).findings.map((finding) => finding.code);
+      expect(codes).toContain('CLEARANCE_WARNING');
+    },
+  );
 
   it.each([
     [0, 40, 40, 40, 65],
