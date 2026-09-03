@@ -47,6 +47,13 @@
             <h2 id="room-title">9 × 11 bathroom</h2>
             <p id="version-label" class="muted">Version —</p>
           </div>
+          <div class="studio-setup">
+            <label for="room-type-select">Room type</label>
+            <select id="room-type-select">
+              <option value="bathroom">Bathroom</option>
+              <option value="kitchen">Kitchen</option>
+            </select>
+          </div>
           <div class="zoom-controls" aria-label="Canvas zoom">
             <button id="zoom-out" type="button" aria-label="Zoom out">−</button>
             <output id="zoom-label">100%</output>
@@ -64,6 +71,8 @@
               </pattern>
             </defs>
             <rect class="room-floor" x="0" y="0" width="108" height="132" />
+            <g id="openings-layer"></g>
+            <g id="anchors-layer"></g>
             <g id="committed-layer"></g>
             <g id="proposal-layer"></g>
           </svg>
@@ -104,6 +113,29 @@
           <div class="budget-track"><span id="budget-fill"></span></div>
           <p id="budget-copy" class="muted"></p>
           <ul id="findings" class="findings"></ul>
+        </section>
+
+        <section class="bom-panel" aria-labelledby="bom-heading">
+          <h3 id="bom-heading">Bill of Materials</h3>
+          <div id="bom-content">
+            <table id="bom-table">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Qty</th>
+                  <th>Unit</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody id="bom-lines"></tbody>
+              <tfoot>
+                <tr>
+                  <th colspan="3">Estimated Total</th>
+                  <td id="bom-total">$0</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
         </section>
 
         <section class="proposal-review" aria-labelledby="review-title">

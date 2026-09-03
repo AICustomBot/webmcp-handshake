@@ -150,7 +150,10 @@ const tamperedDecisionRes = await fetch(`${BASE}/api/v1/sessions/${sessionId}/de
     outcome: 'approve',
   }),
 });
-assert(tamperedDecisionRes.status === 400, 'Decision with mismatched hash returns 400 Bad Request');
+assert(
+  tamperedDecisionRes.status === 409 || tamperedDecisionRes.status === 400,
+  'Decision with mismatched hash returns 409 Conflict or 400 Bad Request',
+);
 const tamperedData = await tamperedDecisionRes.json();
 assert(
   tamperedData.error?.code === 'PROPOSAL_HASH_MISMATCH',
@@ -292,7 +295,10 @@ const protectedBlockedRes = await fetch(`${BASE}/api/v1/sessions/${sessionId}/pr
   headers: authHeaders,
   body: JSON.stringify(protectedActionInput),
 });
-assert(protectedBlockedRes.status === 400, 'Unconfirmed protected action returns 400');
+assert(
+  protectedBlockedRes.status === 428 || protectedBlockedRes.status === 400,
+  'Unconfirmed protected action returns 428 Precondition Required or 400',
+);
 const protectedBlockedData = await protectedBlockedRes.json();
 assert(
   protectedBlockedData.error?.code === 'CONFIRMATION_REQUIRED',
@@ -345,7 +351,10 @@ const replayProofRes = await fetch(`${BASE}/api/v1/sessions/${sessionId}/protect
     proof,
   }),
 });
-assert(replayProofRes.status === 400, 'Replayed consumed proof returns 400 Bad Request');
+assert(
+  replayProofRes.status === 428 || replayProofRes.status === 400,
+  'Replayed consumed proof returns 428 Precondition Required or 400 Bad Request',
+);
 const replayProofData = await replayProofRes.json();
 assert(
   replayProofData.error?.code === 'CONFIRMATION_REQUIRED',

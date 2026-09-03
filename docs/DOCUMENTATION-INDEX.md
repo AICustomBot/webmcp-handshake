@@ -13,5 +13,6 @@
 11. Submission pack — Devpost copy, tool matrix, verification dossier, and demo script (`docs/SUBMISSION-PACK.md`).
 12. Deployment runbook — production deployment, operations, live verification, and release sign-off (`docs/DEPLOYMENT-RUNBOOK.md`).
 13. Engineering workbook — Jira-style epics, sprint boards, and task execution logs (`docs/WORKBOOK.md`).
+14. Production gap analysis & roadmap — full-stack gap matrices across 6 tracks, sprint backlogs, and maintenance guides (`docs/GAP-ANALYSIS.md`).
 
 Precedence: implementation decisions → machine-readable contracts → policy/state machine → specifications → code.

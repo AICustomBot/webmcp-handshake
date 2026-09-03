@@ -5,7 +5,19 @@ import { SYNTHETIC_CATALOG } from './catalog';
 import { healthResponse } from './health';
 import { buildReceipt, createHumanConfirmation, performProtectedAction } from './protected-runtime';
 import type { ProtectedActionOutcome } from './protected-runtime';
-import { CONTRACT_VERSION, LIMITS } from '@handshake/contracts';
+import {
+  CATEGORY_ROOM_TYPES,
+  CONTRACT_VERSION,
+  GUIDELINE_SOURCE,
+  HTTP_STATUS_FOR_ERROR,
+  LIMITS,
+} from '@handshake/contracts';
+import type {
+  BillOfMaterialsResponse,
+  CatalogResponse,
+  ErrorCode,
+  RoomType,
+} from '@handshake/contracts';
 import { parseApiRoute, readBoundedJson } from './runtime-utils';
 export { parseApiRoute, readBoundedJson } from './runtime-utils';
 export type { ApiRoute } from './runtime-utils';
@@ -19,6 +31,7 @@ import type {
 } from '@handshake/contracts';
 import {
   applyOperations,
+  buildBillOfMaterials,
   checkIdempotency,
   mayApplyWithHash,
   mayCreateProposal,
@@ -48,6 +61,7 @@ interface StoredSession {
 }
 
 interface CreateSessionBody {
+  roomType?: RoomType;
   widthIn?: number;
   lengthIn?: number;
   budgetCents?: number;
@@ -83,14 +97,9 @@ const CAPABILITY_HEADER = 'x-handshake-capability';
 const ACTOR_HEADER = 'x-handshake-actor';
 const DEFAULT_ROOM = { widthIn: 108, lengthIn: 132, budgetCents: 1400000 } as const;
 
-/** Maps stable errors to conservative HTTP statuses. */
+/** Maps stable errors to conservative HTTP statuses using contracted mapping. */
 function statusFor(code: string): number {
-  if (code === 'SESSION_NOT_FOUND' || code === 'PROPOSAL_NOT_FOUND') return 404;
-  if (code === 'FORBIDDEN_ACTOR') return 403;
-  if (code === 'VERSION_CONFLICT' || code === 'IDEMPOTENCY_CONFLICT') return 409;
-  if (code === 'LIMIT_EXCEEDED') return 413;
-  if (code === 'NOT_IMPLEMENTED') return 501;
-  return 400;
+  return HTTP_STATUS_FOR_ERROR[code as ErrorCode] ?? 400;
 }
 
 /** Produces the common fail-closed tool envelope. */
@@ -134,7 +143,62 @@ function actorFor(resource: string): Actor['kind'] {
 /** Handles static assets, session creation, and capability-preserving DO routing. */
 export async function routeRequest(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
-  if (url.pathname === '/healthz') return healthResponse(request);
+  if (url.pathname === '/healthz' || url.pathname === '/api/v1/health') {
+    return healthResponse(request);
+  }
+  if (url.pathname === '/api/v1/catalog' && request.method === 'GET') {
+    const requestId = crypto.randomUUID();
+    const roomTypeParam = url.searchParams.get('roomType');
+    const categoryParam = url.searchParams.get('category');
+    const maxPriceParam = url.searchParams.get('maxPriceCents');
+    const accessibleParam = url.searchParams.get('accessibleOnly');
+
+    let products = [...SYNTHETIC_CATALOG];
+
+    if (roomTypeParam) {
+      products = products.filter((product) => {
+        const allowed = CATEGORY_ROOM_TYPES[product.category];
+        return allowed?.includes(roomTypeParam as RoomType) ?? false;
+      });
+    }
+
+    if (categoryParam) {
+      products = products.filter((product) => product.category === categoryParam);
+    }
+
+    if (maxPriceParam !== null) {
+      const maxPrice = Number(maxPriceParam);
+      if (Number.isFinite(maxPrice)) {
+        products = products.filter((product) => product.priceCents <= maxPrice);
+      }
+    }
+
+    if (accessibleParam !== null) {
+      const accessibleOnly = accessibleParam === 'true' || accessibleParam === '1';
+      if (accessibleOnly) {
+        products = products.filter((product) => product.accessible);
+      }
+    }
+
+    const catalogResponse: CatalogResponse = {
+      contractVersion: CONTRACT_VERSION,
+      products,
+      guidelineSource: GUIDELINE_SOURCE,
+    };
+
+    return Response.json(
+      {
+        ok: true,
+        requestId,
+        contractVersion: CONTRACT_VERSION,
+        products,
+        guidelineSource: GUIDELINE_SOURCE,
+        data: catalogResponse,
+      },
+      { status: 200 },
+    );
+  }
+
   if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
 
   const requestId = crypto.randomUUID();
@@ -153,6 +217,7 @@ export async function routeRequest(request: Request, env: Env): Promise<Response
           'x-handshake-internal': 'init',
         },
         body: JSON.stringify({
+          roomType: body.roomType,
           widthIn: body.widthIn,
           lengthIn: body.lengthIn,
           budgetCents: body.budgetCents,
@@ -272,6 +337,16 @@ export class DesignSession extends DurableObject<Env> {
       if (url.pathname === '/receipt' && request.method === 'GET') {
         return this.receipt(requestId, session);
       }
+      if (url.pathname === '/bom' && request.method === 'GET') {
+        const bom = buildBillOfMaterials(session.state, SYNTHETIC_CATALOG);
+        const responseData: BillOfMaterialsResponse = {
+          version: session.state.version,
+          bom,
+          budgetCents: session.state.budgetCents,
+          remainingCents: session.state.budgetCents - bom.subtotalCents,
+        };
+        return success(requestId, responseData);
+      }
       return failure(requestId, 'NOT_IMPLEMENTED', 'Session route is not implemented.');
     } catch (error) {
       const code = error instanceof RangeError ? 'LIMIT_EXCEEDED' : 'INVALID_INPUT';
@@ -288,6 +363,14 @@ export class DesignSession extends DurableObject<Env> {
       sessionId: string;
       capability: string;
     };
+    if (
+      body.roomType !== undefined &&
+      body.roomType !== 'bathroom' &&
+      body.roomType !== 'kitchen'
+    ) {
+      return failure(requestId, 'INVALID_INPUT', 'Room type is invalid.');
+    }
+    const roomType: RoomType = body.roomType === 'kitchen' ? 'kitchen' : 'bathroom';
     const widthIn = body.widthIn ?? DEFAULT_ROOM.widthIn;
     const lengthIn = body.lengthIn ?? DEFAULT_ROOM.lengthIn;
     const budgetCents = body.budgetCents ?? DEFAULT_ROOM.budgetCents;
@@ -310,10 +393,13 @@ export class DesignSession extends DurableObject<Env> {
       state: {
         sessionId: body.sessionId,
         version: 0,
+        roomType,
         widthIn,
         lengthIn,
         budgetCents,
         items: [],
+        openings: [],
+        serviceAnchors: [],
       },
       proposals: {},
       idempotency: {},

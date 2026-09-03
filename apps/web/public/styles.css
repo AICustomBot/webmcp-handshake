@@ -213,6 +213,22 @@ select {
 .room-heading {
   align-items: center;
 }
+.studio-setup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.studio-setup label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #475467;
+  white-space: nowrap;
+}
+.studio-setup select {
+  width: auto;
+  min-height: 36px;
+  padding: 4px 10px;
+}
 .zoom-controls {
   display: flex;
   align-items: center;
@@ -271,6 +287,12 @@ select {
   stroke: #b85b00;
   stroke-width: 2;
   stroke-dasharray: 4 3;
+}
+.service-anchor {
+  cursor: pointer;
+}
+.room-opening {
+  pointer-events: none;
 }
 .canvas-help {
   text-align: center;
@@ -331,6 +353,34 @@ select {
 .findings .blocked {
   background: #fee4e2;
   color: #8a1c1c;
+}
+.bom-panel h3 {
+  margin: 0 0 10px;
+}
+#bom-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+#bom-table th,
+#bom-table td {
+  padding: 6px 4px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+#bom-table th:nth-child(2),
+#bom-table td:nth-child(2),
+#bom-table th:nth-child(3),
+#bom-table td:nth-child(3),
+#bom-table th:last-child,
+#bom-table td:last-child {
+  text-align: right;
+}
+#bom-table tfoot th,
+#bom-table tfoot td {
+  font-weight: 800;
+  border-top: 2px solid #172033;
+  padding-top: 8px;
 }
 .empty-state {
   margin-top: 12px;

@@ -4,9 +4,20 @@
  * Every decision in this file is a pure function of explicit inputs. No model
  * output, DOM text or agent-supplied claim can influence an authorization
  * outcome. The engine fails closed: unknown or ambiguous states deny.
+ *
+ * This file owns the authorization gates. Planning rules live in
+ * `guidelines.ts` and geometry lives in `geometry.ts`, so the part that decides
+ * what is allowed stays small enough to read in one sitting.
  */
 
-import { CONTRACT_VERSION, LIMITS, RETRYABLE_ERROR_CODES } from '@handshake/contracts';
+import {
+  CONTRACT_VERSION,
+  GUIDELINE_SOURCE,
+  LIMITS,
+  RETRYABLE_ERROR_CODES,
+  ROOM_TYPES,
+  WALL_SIDES,
+} from '@handshake/contracts';
 import type {
   Actor,
   CheckFinding,
@@ -14,16 +25,49 @@ import type {
   DesignEvaluation,
   ErrorCode,
   IdempotencyRecord,
+  OpeningKind,
   Operation,
   Product,
   Proposal,
   ProposalStatus,
   ProtectedAction,
   RoomItem,
+  RoomOpening,
   RoomState,
-  Rotation,
+  RoomType,
   ToolError,
 } from '@handshake/contracts';
+import { fitsInsideRoom, footprintOf, overlaps, stripInFront } from './geometry';
+import { buildBillOfMaterials, evaluateGuidelines, resolveProduct, roomTypeOf } from './guidelines';
+import type { PlacedProduct } from './guidelines';
+
+export {
+  centerOf,
+  distanceBetween,
+  facingGap,
+  fitsInsideRoom,
+  footprintOf,
+  frontVector,
+  hasClearSquare,
+  openingSwing,
+  overlaps,
+  pointOnWall,
+  rightVector,
+  stripBeside,
+  stripInFront,
+  touches,
+  wallLength,
+} from './geometry';
+export type { Footprint, Point, Vector } from './geometry';
+export {
+  buildBillOfMaterials,
+  evaluateGuidelines,
+  openingsOf,
+  resolveProduct,
+  roomTypeOf,
+  serviceAnchorsOf,
+} from './guidelines';
+export type { GuidelineContext, PlacedProduct, ResolvedProduct } from './guidelines';
 
 export type Decision = { allowed: true } | { allowed: false; code: ErrorCode };
 export type ApplyDecision = Decision;
@@ -138,32 +182,110 @@ function isPlacementCoordinate(value: number): boolean {
   return Number.isFinite(value) && value >= 0 && value <= LIMITS.maxRoomDimensionIn;
 }
 
-/** Validates an operation list against shape-independent hard limits. */
+/** Checks whether a value is a legal room width or length. */
+function isRoomDimension(value: number): boolean {
+  if (!Number.isFinite(value)) return false;
+  return value >= LIMITS.minRoomDimensionIn && value <= LIMITS.maxRoomDimensionIn;
+}
+
+/** Checks whether a value is a legal distance along a wall. */
+function isWallMeasurement(value: number): boolean {
+  return Number.isFinite(value) && value >= 0 && value <= LIMITS.maxRoomDimensionIn;
+}
+
+/** Checks whether a value is a legal synthetic budget in whole cents. */
+function isBudgetCents(value: number): boolean {
+  return Number.isInteger(value) && value >= 0;
+}
+
+const OPENING_KINDS: readonly OpeningKind[] = ['door', 'window', 'passage'];
+
+/**
+ * Validates an operation list against shape-independent hard limits.
+ *
+ * Geometry is only bounds-checked here. Whether the result is a sensible layout
+ * is a question for `evaluateDesign`, which reports it as reviewable findings
+ * rather than silently refusing the proposal.
+ */
 export function validateOperations(operations: readonly Operation[]): Decision {
   if (operations.length === 0) return deny('INVALID_INPUT');
   if (operations.length > LIMITS.maxOperationsPerProposal) return deny('LIMIT_EXCEEDED');
   for (const operation of operations) {
-    if (operation.type === 'place') {
-      if (operation.productId.length === 0) return deny('INVALID_INPUT');
-      if (!isPlacementCoordinate(operation.x) || !isPlacementCoordinate(operation.y)) {
-        return deny('INVALID_INPUT');
+    switch (operation.type) {
+      case 'place': {
+        if (operation.productId.length === 0) return deny('INVALID_INPUT');
+        if (!isPlacementCoordinate(operation.x) || !isPlacementCoordinate(operation.y)) {
+          return deny('INVALID_INPUT');
+        }
+        break;
       }
-      continue;
-    }
-    if (operation.type === 'move') {
-      if (operation.itemId.length === 0) return deny('INVALID_INPUT');
-      if (!isPlacementCoordinate(operation.x) || !isPlacementCoordinate(operation.y)) {
-        return deny('INVALID_INPUT');
+      case 'move': {
+        if (operation.itemId.length === 0) return deny('INVALID_INPUT');
+        if (!isPlacementCoordinate(operation.x) || !isPlacementCoordinate(operation.y)) {
+          return deny('INVALID_INPUT');
+        }
+        break;
       }
-      continue;
-    }
-    if (operation.type === 'swap') {
-      if (operation.itemId.length === 0 || operation.replacementProductId.length === 0) {
-        return deny('INVALID_INPUT');
+      case 'swap': {
+        if (operation.itemId.length === 0 || operation.replacementProductId.length === 0) {
+          return deny('INVALID_INPUT');
+        }
+        break;
       }
-      continue;
+      case 'remove': {
+        if (operation.itemId.length === 0) return deny('INVALID_INPUT');
+        break;
+      }
+      case 'configure_room': {
+        const { roomType, widthIn, lengthIn, budgetCents } = operation;
+        if (
+          roomType === undefined &&
+          widthIn === undefined &&
+          lengthIn === undefined &&
+          budgetCents === undefined
+        ) {
+          return deny('INVALID_INPUT');
+        }
+        if (roomType !== undefined && !ROOM_TYPES.includes(roomType)) return deny('INVALID_INPUT');
+        if (widthIn !== undefined && !isRoomDimension(widthIn)) return deny('INVALID_INPUT');
+        if (lengthIn !== undefined && !isRoomDimension(lengthIn)) return deny('INVALID_INPUT');
+        if (budgetCents !== undefined && !isBudgetCents(budgetCents)) return deny('INVALID_INPUT');
+        break;
+      }
+      case 'add_opening': {
+        if (!OPENING_KINDS.includes(operation.kind)) return deny('INVALID_INPUT');
+        if (!WALL_SIDES.includes(operation.wall)) return deny('INVALID_INPUT');
+        if (!isWallMeasurement(operation.offsetIn)) return deny('INVALID_INPUT');
+        if (!isWallMeasurement(operation.widthIn) || operation.widthIn <= 0) {
+          return deny('INVALID_INPUT');
+        }
+        if (!isWallMeasurement(operation.swingIn)) return deny('INVALID_INPUT');
+        break;
+      }
+      case 'move_opening': {
+        if (operation.openingId.length === 0) return deny('INVALID_INPUT');
+        const { wall, offsetIn, widthIn, swingIn } = operation;
+        if (
+          wall === undefined &&
+          offsetIn === undefined &&
+          widthIn === undefined &&
+          swingIn === undefined
+        ) {
+          return deny('INVALID_INPUT');
+        }
+        if (wall !== undefined && !WALL_SIDES.includes(wall)) return deny('INVALID_INPUT');
+        if (offsetIn !== undefined && !isWallMeasurement(offsetIn)) return deny('INVALID_INPUT');
+        if (widthIn !== undefined && (!isWallMeasurement(widthIn) || widthIn <= 0)) {
+          return deny('INVALID_INPUT');
+        }
+        if (swingIn !== undefined && !isWallMeasurement(swingIn)) return deny('INVALID_INPUT');
+        break;
+      }
+      case 'remove_opening': {
+        if (operation.openingId.length === 0) return deny('INVALID_INPUT');
+        break;
+      }
     }
-    if (operation.itemId.length === 0) return deny('INVALID_INPUT');
   }
   return allow();
 }
@@ -290,123 +412,129 @@ export function statusAfterExpiry(proposal: Proposal, now: Date = new Date()): P
 
 export type OperationResult = { ok: true; state: RoomState } | { ok: false; code: ErrorCode };
 
-/** Applies a validated operation list as one pure, versioned state transition. */
+/**
+ * Applies a validated operation list as one pure, versioned state transition.
+ *
+ * Room envelope and opening changes are ordinary operations, so a change to the
+ * room itself is reviewed and hashed exactly like a change to a fixture.
+ *
+ * @param newItemId - Supplies ids for newly placed items, by placement index.
+ * @param newOpeningId - Supplies ids for newly added openings, by add index.
+ */
 export function applyOperations(
   state: RoomState,
   operations: readonly Operation[],
   newItemId: (index: number) => string,
+  newOpeningId: (index: number) => string = (index) => `${newItemId(index)}-opening`,
 ): OperationResult {
   const items: RoomItem[] = state.items.map((item) => ({ ...item }));
+  const openings: RoomOpening[] = (state.openings ?? []).map((opening) => ({ ...opening }));
+  let roomType: RoomType | undefined = state.roomType;
+  let widthIn = state.widthIn;
+  let lengthIn = state.lengthIn;
+  let budgetCents = state.budgetCents;
   let placements = 0;
+  let additions = 0;
+  let openingsTouched = false;
+
   for (const operation of operations) {
-    if (operation.type === 'place') {
-      if (items.length >= LIMITS.maxItemsPerRoom) return { ok: false, code: 'LIMIT_EXCEEDED' };
-      items.push({
-        id: newItemId(placements),
-        productId: operation.productId,
-        x: operation.x,
-        y: operation.y,
-        rotation: operation.rotation,
-      });
-      placements += 1;
-      continue;
+    switch (operation.type) {
+      case 'place': {
+        if (items.length >= LIMITS.maxItemsPerRoom) return { ok: false, code: 'LIMIT_EXCEEDED' };
+        items.push({
+          id: newItemId(placements),
+          productId: operation.productId,
+          x: operation.x,
+          y: operation.y,
+          rotation: operation.rotation,
+        });
+        placements += 1;
+        break;
+      }
+      case 'move':
+      case 'swap':
+      case 'remove': {
+        const position = items.findIndex((item) => item.id === operation.itemId);
+        if (position === -1) return { ok: false, code: 'INVALID_INPUT' };
+        const current = items[position];
+        if (current === undefined) return { ok: false, code: 'INVALID_INPUT' };
+        if (operation.type === 'move') {
+          items[position] = {
+            ...current,
+            x: operation.x,
+            y: operation.y,
+            rotation: operation.rotation,
+          };
+        } else if (operation.type === 'swap') {
+          items[position] = { ...current, productId: operation.replacementProductId };
+        } else {
+          items.splice(position, 1);
+        }
+        break;
+      }
+      case 'configure_room': {
+        if (operation.roomType !== undefined) roomType = operation.roomType;
+        if (operation.widthIn !== undefined) widthIn = operation.widthIn;
+        if (operation.lengthIn !== undefined) lengthIn = operation.lengthIn;
+        if (operation.budgetCents !== undefined) budgetCents = operation.budgetCents;
+        break;
+      }
+      case 'add_opening': {
+        if (openings.length >= LIMITS.maxOpeningsPerRoom) {
+          return { ok: false, code: 'LIMIT_EXCEEDED' };
+        }
+        openings.push({
+          id: newOpeningId(additions),
+          kind: operation.kind,
+          wall: operation.wall,
+          offsetIn: operation.offsetIn,
+          widthIn: operation.widthIn,
+          swingIn: operation.swingIn,
+        });
+        additions += 1;
+        openingsTouched = true;
+        break;
+      }
+      case 'move_opening': {
+        const position = openings.findIndex((opening) => opening.id === operation.openingId);
+        if (position === -1) return { ok: false, code: 'INVALID_INPUT' };
+        const current = openings[position];
+        if (current === undefined) return { ok: false, code: 'INVALID_INPUT' };
+        openings[position] = {
+          ...current,
+          wall: operation.wall ?? current.wall,
+          offsetIn: operation.offsetIn ?? current.offsetIn,
+          widthIn: operation.widthIn ?? current.widthIn,
+          swingIn: operation.swingIn ?? current.swingIn,
+        };
+        openingsTouched = true;
+        break;
+      }
+      case 'remove_opening': {
+        const position = openings.findIndex((opening) => opening.id === operation.openingId);
+        if (position === -1) return { ok: false, code: 'INVALID_INPUT' };
+        openings.splice(position, 1);
+        openingsTouched = true;
+        break;
+      }
     }
-    const position = items.findIndex((item) => item.id === operation.itemId);
-    if (position === -1) return { ok: false, code: 'INVALID_INPUT' };
-    const current = items[position];
-    if (current === undefined) return { ok: false, code: 'INVALID_INPUT' };
-    if (operation.type === 'move') {
-      items[position] = {
-        ...current,
-        x: operation.x,
-        y: operation.y,
-        rotation: operation.rotation,
-      };
-      continue;
-    }
-    if (operation.type === 'swap') {
-      items[position] = { ...current, productId: operation.replacementProductId };
-      continue;
-    }
-    items.splice(position, 1);
   }
-  return { ok: true, state: { ...state, version: state.version + 1, items } };
+
+  const next: RoomState = {
+    ...state,
+    version: state.version + 1,
+    widthIn,
+    lengthIn,
+    budgetCents,
+    items,
+  };
+  if (roomType !== undefined) next.roomType = roomType;
+  if (openingsTouched || state.openings !== undefined) next.openings = openings;
+  return { ok: true, state: next };
 }
 
-interface Footprint {
-  left: number;
-  top: number;
-  right: number;
-  bottom: number;
-}
-
-interface PlacedItem {
-  id: string;
-  box: Footprint;
-  clearanceIn: number;
-  rotation: Rotation;
-}
-
-/** Returns the rotated floor footprint of an item. */
-function footprint(item: RoomItem, product: Product): Footprint {
-  const rotated = item.rotation === 90 || item.rotation === 270;
-  const width = rotated ? product.depthIn : product.widthIn;
-  const depth = rotated ? product.widthIn : product.depthIn;
-  return { left: item.x, top: item.y, right: item.x + width, bottom: item.y + depth };
-}
-
-/** Returns whether two open-edged floor rectangles overlap. */
-function overlaps(a: Footprint, b: Footprint): boolean {
-  if (a.right <= b.left || b.right <= a.left) return false;
-  return !(a.bottom <= b.top || b.bottom <= a.top);
-}
-
-/** Returns whether a rectangle lies entirely inside the room. */
-function fitsInsideRoom(state: RoomState, box: Footprint): boolean {
-  if (box.left < 0 || box.top < 0) return false;
-  return box.right <= state.widthIn && box.bottom <= state.lengthIn;
-}
-
-/**
- * Returns the product-defined approach strip in front of a rotated fixture.
- * Front directions are: 0 down, 90 left, 180 up and 270 right.
- */
-function clearanceFootprint(entry: PlacedItem): Footprint {
-  const { box, clearanceIn } = entry;
-  switch (entry.rotation) {
-    case 0:
-      return {
-        left: box.left,
-        top: box.bottom,
-        right: box.right,
-        bottom: box.bottom + clearanceIn,
-      };
-    case 90:
-      return {
-        left: box.left - clearanceIn,
-        top: box.top,
-        right: box.left,
-        bottom: box.bottom,
-      };
-    case 180:
-      return {
-        left: box.left,
-        top: box.top - clearanceIn,
-        right: box.right,
-        bottom: box.top,
-      };
-    case 270:
-      return {
-        left: box.right,
-        top: box.top,
-        right: box.right + clearanceIn,
-        bottom: box.bottom,
-      };
-  }
-}
-
-/** Finds fixture footprint collisions. */
-function findOverlapFindings(placed: readonly PlacedItem[]): CheckFinding[] {
+/** Finds fixture footprint collisions among floor-standing products. */
+function findOverlapFindings(placed: readonly PlacedProduct[]): CheckFinding[] {
   const findings: CheckFinding[] = [];
   for (let i = 0; i < placed.length; i += 1) {
     const first = placed[i];
@@ -418,7 +546,7 @@ function findOverlapFindings(placed: readonly PlacedItem[]): CheckFinding[] {
         code: 'FIXTURE_OVERLAP',
         severity: 'blocked',
         message: 'Two fixtures occupy the same floor area.',
-        itemIds: [first.id, second.id],
+        itemIds: [first.item.id, second.item.id],
       });
     }
   }
@@ -426,27 +554,27 @@ function findOverlapFindings(placed: readonly PlacedItem[]): CheckFinding[] {
 }
 
 /** Finds product-preference clearance boundary and obstruction warnings. */
-function findClearanceFindings(state: RoomState, placed: readonly PlacedItem[]): CheckFinding[] {
+function findClearanceFindings(state: RoomState, placed: readonly PlacedProduct[]): CheckFinding[] {
   const findings: CheckFinding[] = [];
   for (const entry of placed) {
-    if (entry.clearanceIn <= 0) continue;
-    const strip = clearanceFootprint(entry);
+    if (entry.product.clearanceIn <= 0) continue;
+    const strip = stripInFront(entry.box, entry.item.rotation, entry.product.clearanceIn);
     if (!fitsInsideRoom(state, strip)) {
       findings.push({
         code: 'CLEARANCE_WARNING',
         severity: 'warning',
-        message: `Approach space in front of ${entry.id} runs past the room boundary.`,
-        itemIds: [entry.id],
+        message: `Approach space in front of ${entry.item.id} runs past the room boundary.`,
+        itemIds: [entry.item.id],
       });
       continue;
     }
     for (const other of placed) {
-      if (other.id === entry.id || !overlaps(strip, other.box)) continue;
+      if (other.item.id === entry.item.id || !overlaps(strip, other.box)) continue;
       findings.push({
         code: 'CLEARANCE_WARNING',
         severity: 'warning',
-        message: `Approach space in front of ${entry.id} is blocked by ${other.id}.`,
-        itemIds: [entry.id, other.id],
+        message: `Approach space in front of ${entry.item.id} is blocked by ${other.item.id}.`,
+        itemIds: [entry.item.id, other.item.id],
       });
       break;
     }
@@ -454,11 +582,18 @@ function findClearanceFindings(state: RoomState, placed: readonly PlacedItem[]):
   return findings;
 }
 
-/** Evaluates deterministic synthetic cost, bounds, overlap and clearance rules. */
+/**
+ * Evaluates cost, bounds, overlap, clearance and the planning rule pack for the
+ * room type, then prices the result as a bill of materials.
+ *
+ * Findings never gate approval. They are the proof a human reviews before
+ * deciding, so the front end must render this evaluation rather than
+ * recomputing a weaker one locally.
+ */
 export function evaluateDesign(state: RoomState, catalog: readonly Product[]): DesignEvaluation {
-  const products = new Map(catalog.map((product) => [product.id, product]));
+  const products = new Map(catalog.map((product) => [product.id, resolveProduct(product)]));
   const findings: CheckFinding[] = [];
-  const placed: PlacedItem[] = [];
+  const placed: PlacedProduct[] = [];
   let committedCents = 0;
 
   for (const item of state.items) {
@@ -473,13 +608,8 @@ export function evaluateDesign(state: RoomState, catalog: readonly Product[]): D
       continue;
     }
     committedCents += product.priceCents;
-    const box = footprint(item, product);
-    placed.push({
-      id: item.id,
-      box,
-      clearanceIn: product.clearanceIn,
-      rotation: item.rotation,
-    });
+    const box = footprintOf(item, product);
+    placed.push({ item, product, box });
     if (!fitsInsideRoom(state, box)) {
       findings.push({
         code: 'OUT_OF_BOUNDS',
@@ -490,7 +620,11 @@ export function evaluateDesign(state: RoomState, catalog: readonly Product[]): D
     }
   }
 
-  findings.push(...findOverlapFindings(placed), ...findClearanceFindings(state, placed));
+  // Only floor-standing products contend for floor area. A wall cabinet above a
+  // base cabinet is a normal kitchen, not a collision.
+  const floorItems = placed.filter((entry) => entry.product.occupiesFloor);
+  findings.push(...findOverlapFindings(floorItems), ...findClearanceFindings(state, floorItems));
+
   const overBudget = committedCents > state.budgetCents;
   if (overBudget) {
     findings.push({
@@ -501,11 +635,27 @@ export function evaluateDesign(state: RoomState, catalog: readonly Product[]): D
     });
   }
 
+  const roomType = roomTypeOf(state);
+  findings.push(...evaluateGuidelines({ state, roomType, placed }));
+
+  let blockedCount = 0;
+  let warningCount = 0;
+  for (const finding of findings) {
+    if (finding.severity === 'blocked') blockedCount += 1;
+    if (finding.severity === 'warning') warningCount += 1;
+  }
+
   return {
     version: state.version,
     committedCents,
     budgetCents: state.budgetCents,
     overBudget,
     findings,
+    roomType,
+    remainingCents: state.budgetCents - committedCents,
+    blockedCount,
+    warningCount,
+    bom: buildBillOfMaterials(state, catalog),
+    guidelineSource: GUIDELINE_SOURCE,
   };
 }
