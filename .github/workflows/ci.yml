@@ -10,6 +10,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   validate:
+    name: Code Quality & Verification
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -22,4 +23,70 @@ jobs:
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
-      - run: pnpm exec wrangler deploy --dry-run
+      - name: Verify Default Worker Bundle
+        run: pnpm exec wrangler deploy --dry-run
+      - name: Verify Staging Worker Bundle
+        run: pnpm exec wrangler deploy --env staging --dry-run
+
+  smoke:
+    name: Live HTTP Smoke Journey
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with: { version: 10.15.0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - name: Run Live Cloudflare Worker & Execute Smoke Suite
+        run: |
+          pnpm dev --port 8787 &
+          DEV_PID=$!
+          echo "Waiting for local worker server on port 8787..."
+          for i in {1..30}; do
+            if curl -s http://127.0.0.1:8787/healthz | grep -q '"ok":true'; then
+              echo "Server ready on port 8787 after ${i}s"
+              break
+            fi
+            sleep 1
+          done
+          pnpm test:smoke
+          kill $DEV_PID || true
+
+  e2e:
+    name: Playwright Browser & Accessibility Suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with: { version: 10.15.0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: pnpm install --frozen-lockfile
+      - name: Install Playwright Chromium
+        run: uv run --with playwright playwright install --with-deps chromium
+      - name: Run E2E Headless Suite
+        env:
+          E2E_BROWSER_CHANNEL: default
+        run: |
+          pnpm dev --port 8787 &
+          DEV_PID=$!
+          echo "Waiting for local worker server on port 8787..."
+          for i in {1..30}; do
+            if curl -s http://127.0.0.1:8787/healthz | grep -q '"ok":true'; then
+              echo "Server ready on port 8787 after ${i}s"
+              break
+            fi
+            sleep 1
+          done
+          uv run --with playwright python3 scripts/test-e2e-browser.py
+          kill $DEV_PID || true
