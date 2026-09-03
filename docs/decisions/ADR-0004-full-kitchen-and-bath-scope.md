@@ -35,7 +35,7 @@ Option **C**. Handshake models kitchens and baths as first-class room types,
 and its deterministic engine encodes published planning guidelines for both.
 
 The decision rests on the project's own premise. Handshake exists to prove that
-an agent can propose a change and a human can approve it *with proof*. The
+an agent can propose a change and a human can approve it _with proof_. The
 proof is only worth reviewing if the checks behind it are the checks a real
 designer would apply. A rule engine that only knows "these two boxes overlap"
 does not demonstrate the thesis. One that knows the work triangle is 3 inches
