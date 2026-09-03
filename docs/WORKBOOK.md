@@ -23,8 +23,8 @@
 | **HSK-EPIC-8**  | End-to-end production verification, browser testing & release | **CLOSED**      | Senior AI Pair | PR #10, #12, #14                            |
 | **HSK-EPIC-9**  | Kitchen-Bath Domain Integration (Requirement R1)              | **CLOSED**      | Senior AI Pair | PR #15 (`hsk-09-kitchen-bath-integration`)  |
 | **HSK-EPIC-10** | Production Frontend Polish (Requirement R2)                   | **CLOSED**      | Senior AI Pair | PR #16 (`hsk-10-frontend-polish`)           |
-| **HSK-EPIC-11** | Backend Hardening for Production Traffic (Requirement R3)     | **IN PROGRESS** | Senior AI Pair | Branch `hsk-11-backend-hardening`           |
-| **HSK-EPIC-12** | CI/CD Pipeline & Deployment Automation (Requirement R4)       | **TO DO**       | Senior AI Pair | Branch `hsk-12-cicd-deployment`             |
+| **HSK-EPIC-11** | Backend Hardening for Production Traffic (Requirement R3)     | **CLOSED**      | Senior AI Pair | PR #17 (`hsk-11-backend-hardening`)         |
+| **HSK-EPIC-12** | CI/CD Pipeline & Deployment Automation (Requirement R4)       | **IN PROGRESS** | Senior AI Pair | Branch `hsk-12-cicd-deployment`             |
 | **HSK-EPIC-13** | Production Readiness Documentation (Requirement R5)           | **TO DO**       | Senior AI Pair | Branch `hsk-13-production-readiness-docs`   |
 | **HSK-EPIC-14** | Requirement-Driven E2E Test Suite & Adversarial Hardening     | **CLOSED**      | Senior AI Pair | Verified (90 Unit, 62 Smoke, 37 E2E)        |
 
@@ -42,13 +42,15 @@ Execute and complete the 5 core requirements (R1 through R5) plus requirement-dr
 +------------------------------------+------------------------------------+------------------------------------+
 | TO DO                              | IN PROGRESS                        | DONE                               |
 +------------------------------------+------------------------------------+------------------------------------+
-| [HSK-18] M4 CI/CD Automation       | [HSK-17] M3 Backend Hardening      | [HSK-1..14] Foundation, Core DO,   |
-| [HSK-19] M5 Production Docs        |                                    |             WebMCP, Smoke & Runbook|
-| [HSK-21] M6 Adversarial Hardening  |                                    |                                    |
+| [HSK-19] M5 Production Docs        | [HSK-18] M4 CI/CD Automation       | [HSK-1..14] Foundation, Core DO,   |
+| [HSK-21] M6 Adversarial Hardening  |                                    |             WebMCP, Smoke & Runbook|
+|                                    |                                    |                                    |
 |                                    |                                    | [HSK-15] M1 Kitchen-Bath Domain    |
 |                                    |                                    |          Integration (R1) (Done)   |
 |                                    |                                    |                                    |
 |                                    |                                    | [HSK-16] M2 Frontend Polish (Done) |
+|                                    |                                    |                                    |
+|                                    |                                    | [HSK-17] M3 Backend Hardening (Done|
 |                                    |                                    |                                    |
 |                                    |                                    | [HSK-20] E2E Testing Suite Track   |
 |                                    |                                    |          (90 unit, 62 smoke, 37 e2e|
@@ -110,15 +112,15 @@ Execute and complete the 5 core requirements (R1 through R5) plus requirement-dr
 - **Branch**: `hsk-11-backend-hardening`
 - **Type**: Story / Infrastructure & Security
 - **Priority**: P1 (High)
-- **Status**: `TO DO`
-- **Assignee**: Sub-Orchestrator M3
+- **Status**: `DONE`
+- **Assignee**: Senior AI Pair
 - **Tasks**:
-  - [ ] Rate limiting in `DesignSession` DO returning 429 `RATE_LIMITED`.
-  - [ ] CORS preflight and response headers on `/api/v1/*`.
-  - [ ] Server-side query parameter filtering on `GET /api/v1/catalog`.
-  - [ ] Request body streaming validation (32 KiB cap).
-  - [ ] Protected action network retry resilience.
-  - [ ] Staging environment configuration in `wrangler.jsonc`.
+  - [x] Rate limiting in `DesignSession` DO returning 429 `RATE_LIMITED`.
+  - [x] CORS preflight and response headers on `/api/v1/*`.
+  - [x] Server-side query parameter filtering on `GET /api/v1/catalog`.
+  - [x] Request body streaming validation (32 KiB cap).
+  - [x] Protected action network retry resilience.
+  - [x] Staging environment configuration in `wrangler.jsonc`.
 
 ---
 

@@ -24,6 +24,37 @@ export async function readBoundedJson(request: Request): Promise<unknown> {
   if (Number.isFinite(declared) && declared > LIMITS.maxBodyBytes) {
     throw new RangeError('Request body exceeds the configured limit.');
   }
+
+  if (request.body && typeof request.body.getReader === 'function') {
+    const reader = request.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let totalBytes = 0;
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value) {
+          totalBytes += value.byteLength;
+          if (totalBytes > LIMITS.maxBodyBytes) {
+            await reader.cancel('Body exceeds maximum allowed size');
+            throw new RangeError('Request body exceeds the configured limit.');
+          }
+          chunks.push(value);
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+    if (totalBytes === 0) return {};
+    const fullBuffer = new Uint8Array(totalBytes);
+    let offset = 0;
+    for (const chunk of chunks) {
+      fullBuffer.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    return JSON.parse(new TextDecoder().decode(fullBuffer)) as unknown;
+  }
+
   const bytes = await request.arrayBuffer();
   if (bytes.byteLength > LIMITS.maxBodyBytes) {
     throw new RangeError('Request body exceeds the configured limit.');

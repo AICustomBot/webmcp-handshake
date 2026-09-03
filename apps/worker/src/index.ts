@@ -97,23 +97,50 @@ const CAPABILITY_HEADER = 'x-handshake-capability';
 const ACTOR_HEADER = 'x-handshake-actor';
 const DEFAULT_ROOM = { widthIn: 108, lengthIn: 132, budgetCents: 1400000 } as const;
 
+/** Permissive same-origin and showroom-embed CORS headers. */
+export const CORS_HEADERS: Record<string, string> = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers':
+    'content-type, x-handshake-capability, x-handshake-actor, x-request-id',
+  'Access-Control-Max-Age': '86400',
+};
+
 /** Maps stable errors to conservative HTTP statuses using contracted mapping. */
 function statusFor(code: string): number {
   return HTTP_STATUS_FOR_ERROR[code as ErrorCode] ?? 400;
 }
 
 /** Produces the common fail-closed tool envelope. */
-function failure(requestId: string, code: string, message: string): Response {
+function failure(
+  requestId: string,
+  code: string,
+  message: string,
+  extraHeaders?: HeadersInit,
+): Response {
+  const headers = new Headers(CORS_HEADERS);
+  if (extraHeaders) {
+    new Headers(extraHeaders).forEach((value, key) => headers.set(key, value));
+  }
   return Response.json(
-    { ok: false, requestId, error: { code, message, retryable: false } },
-    { status: statusFor(code) },
+    { ok: false, requestId, error: { code, message, retryable: code === 'RATE_LIMITED' } },
+    { status: statusFor(code), headers },
   );
 }
 
 /** Produces the common successful tool envelope. */
-function success<T>(requestId: string, data: T, status = 200): Response {
+function success<T>(
+  requestId: string,
+  data: T,
+  status = 200,
+  extraHeaders?: HeadersInit,
+): Response {
   const result: ToolResult<T> = { ok: true, requestId, data };
-  return Response.json(result, { status });
+  const headers = new Headers(CORS_HEADERS);
+  if (extraHeaders) {
+    new Headers(extraHeaders).forEach((value, key) => headers.set(key, value));
+  }
+  return Response.json(result, { status, headers });
 }
 
 /** Generates an unguessable hexadecimal capability without external services. */
@@ -143,6 +170,9 @@ function actorFor(resource: string): Actor['kind'] {
 /** Handles static assets, session creation, and capability-preserving DO routing. */
 export async function routeRequest(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
+  if (request.method === 'OPTIONS' && url.pathname.startsWith('/api/')) {
+    return new Response(null, { status: 204, headers: CORS_HEADERS });
+  }
   if (url.pathname === '/healthz' || url.pathname === '/api/v1/health') {
     return healthResponse(request);
   }
@@ -195,7 +225,7 @@ export async function routeRequest(request: Request, env: Env): Promise<Response
         guidelineSource: GUIDELINE_SOURCE,
         data: catalogResponse,
       },
-      { status: 200 },
+      { status: 200, headers: CORS_HEADERS },
     );
   }
 
@@ -265,6 +295,8 @@ export default {
 
 /** Authoritative, single-threaded state holder for one synthetic session. */
 export class DesignSession extends DurableObject<Env> {
+  private requestTimestamps: Array<{ timestamp: number; isWrite: boolean }> = [];
+
   /** Handles session state and all atomic mutations. */
   async fetch(request: Request): Promise<Response> {
     return this.ctx.blockConcurrencyWhile(() => this.handle(request));
@@ -303,6 +335,27 @@ export class DesignSession extends DurableObject<Env> {
     if (request.headers.get(CAPABILITY_HEADER) !== session.capability) {
       return failure(requestId, 'FORBIDDEN_ACTOR', 'Session capability is invalid.');
     }
+
+    const now = Date.now();
+    this.requestTimestamps = this.requestTimestamps.filter(
+      (entry) => now - entry.timestamp < 60_000,
+    );
+    const isWrite =
+      request.method === 'POST' || request.method === 'PUT' || request.method === 'DELETE';
+    const writeCount = this.requestTimestamps.filter((entry) => entry.isWrite).length;
+
+    if (
+      this.requestTimestamps.length >= LIMITS.maxRequestsPerMinute ||
+      (isWrite && writeCount >= LIMITS.maxWritesPerMinute)
+    ) {
+      return failure(
+        requestId,
+        'RATE_LIMITED',
+        'Too many requests for this session. Please retry after backoff.',
+        { 'Retry-After': '5' },
+      );
+    }
+    this.requestTimestamps.push({ timestamp: now, isWrite });
 
     const actor: Actor = {
       kind: request.headers.get(ACTOR_HEADER) === 'human_ui' ? 'human_ui' : 'agent',
