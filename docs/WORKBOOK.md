@@ -26,15 +26,16 @@
 | **HSK-EPIC-11** | Backend Hardening for Production Traffic (Requirement R3)     | **CLOSED** | Senior AI Pair | PR #17 (`hsk-11-backend-hardening`)         |
 | **HSK-EPIC-12** | CI/CD Pipeline & Deployment Automation (Requirement R4)       | **CLOSED** | Senior AI Pair | PR #18 (`hsk-12-cicd-deployment`)           |
 | **HSK-EPIC-13** | Production Readiness Documentation (Requirement R5)           | **CLOSED** | Senior AI Pair | PR #19 (`hsk-13-production-readiness-docs`) |
-| **HSK-EPIC-14** | Requirement-Driven E2E Test Suite & Adversarial Hardening     | **CLOSED** | Senior AI Pair | Verified (93 Unit, 62 Smoke, 37 E2E)        |
+| **HSK-EPIC-14** | Requirement-Driven E2E Test Suite & Adversarial Hardening     | **CLOSED** | Senior AI Pair | Verified (100 Unit, 62 Smoke, 37 E2E)       |
+| **HSK-EPIC-15** | Brand Identity & Pro Logo/Favicon Design                      | **CLOSED** | Senior AI Pair | PR #22 (`hsk-16-logo-favicon`)              |
 
 ---
 
-## 2. Active Sprint Board (Sprint 5: Production Readiness)
+## 2. Active Sprint Board (Sprint 5: Production Readiness & Visual Polish)
 
 ### Sprint Goal
 
-Execute and complete the 5 core requirements (R1 through R5) plus requirement-driven E2E testing: merge the full kitchen-bath planning domain (+2,294 lines, 90 tests), expand catalog to 16 items with NKBA metadata, polish frontend with BOM, reset, loading, and accessible UI, harden backend with rate limiting and CORS, automate CI/CD with Miniflare smoke and Playwright E2E, and publish complete gap analysis documentation.
+Execute and complete the 5 core requirements (R1 through R5) plus requirement-driven E2E testing and professional brand identity design: merge the full kitchen-bath planning domain (+2,294 lines, 90 tests), expand catalog to 16 items with NKBA metadata, polish frontend with BOM, reset, loading, and accessible UI, harden backend with rate limiting and CORS, automate CI/CD with Miniflare smoke and Playwright E2E, publish complete gap analysis documentation, and deliver a modern vector logo and multi-resolution favicon suite.
 
 ### Task Board
 
@@ -61,6 +62,9 @@ Execute and complete the 5 core requirements (R1 through R5) plus requirement-dr
 |                                    |                                    |                                    |
 |                                    |                                    | [HSK-21] M6 Adversarial Hardening  |
 |                                    |                                    |          (7 constitutional tests)  |
+|                                    |                                    |                                    |
+|                                    |                                    | [HSK-22] M7 Brand Identity Logo    |
+|                                    |                                    |          & Favicon Suite (Done)    |
 +------------------------------------+------------------------------------+------------------------------------+
 ```
 
@@ -193,3 +197,22 @@ Execute and complete the 5 core requirements (R1 through R5) plus requirement-dr
   - [x] Phase 1: Pass 100% of E2E test suite (100 unit/policy tests, 62 smoke tests, 37 browser E2E tests).
   - [x] Phase 2: White-box adversarial testing (`tests/adversarial.test.ts` covering 7 constitutional prohibitions).
   - [x] Forensic Auditor integrity validation (CLEAN verdict, zero leaks, full redaction in receipts).
+
+---
+
+### [HSK-22] Brand Identity & Pro Logo/Favicon Design
+
+- **Issue**: #22
+- **Branch**: `hsk-16-logo-favicon`
+- **Type**: Story / Design & UX
+- **Priority**: P1 (High)
+- **Status**: `DONE`
+- **Assignee**: Senior AI Pair
+- **Tasks**:
+  - [x] Design precision vector SVG brand logo (`apps/web/public/logo.svg`).
+  - [x] Design high-contrast scalable favicon (`apps/web/public/favicon.svg`).
+  - [x] Generate high-res raster PNG assets (`favicon.ico`, `favicon.png`, `apple-touch-icon.png`, `logo.png`).
+  - [x] Integrate logo into Studio SPA header with accessible markup in `apps/web/public/index.html`.
+  - [x] Wire favicon `<link>` tags in `<head>` of `apps/web/public/index.html`.
+  - [x] Add CSS styling in `apps/web/public/styles.css` for responsive logo presentation.
+  - [x] Verify browser rendering, smoke tests, unit tests, and dry-run bundles.
