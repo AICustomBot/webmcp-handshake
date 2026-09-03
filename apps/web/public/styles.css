@@ -537,3 +537,115 @@ footer {
     transition: none !important;
   }
 }
+
+.reset-btn {
+  margin-left: 12px;
+  font-size: 12px;
+  padding: 6px 12px;
+  min-height: 36px;
+  border-radius: 6px;
+}
+
+.notice-banner {
+  max-width: 1440px;
+  margin: 10px auto 0;
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f0f4ff;
+  border: 1px solid #c9d8fb;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #1e3a8a;
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 16px;
+  right: 24px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(16, 24, 40, 0.88);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 999px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.fixture {
+  cursor: grab;
+}
+.fixture:active {
+  cursor: grabbing;
+}
+
+@media print {
+  body {
+    background: #fff;
+    color: #000;
+  }
+  .skip-link,
+  .topbar,
+  .catalog-panel,
+  .zoom-controls,
+  .manual-controls,
+  .canvas-help,
+  .proposal-review,
+  .button-row,
+  .notice-banner,
+  .loading-overlay,
+  footer {
+    display: none !important;
+  }
+  .studio {
+    display: block;
+    padding: 0;
+    margin: 0;
+    max-width: 100%;
+  }
+  .panel {
+    border: none;
+    box-shadow: none;
+    padding: 0;
+  }
+  .canvas-panel {
+    page-break-after: always;
+  }
+  .canvas-shell {
+    background: transparent;
+    padding: 0;
+    min-height: auto;
+  }
+  #room-canvas {
+    width: 100%;
+    max-width: 100%;
+    filter: none;
+  }
+  .review-panel {
+    margin-top: 24px;
+  }
+  .bom-panel {
+    display: block !important;
+    margin-top: 24px;
+  }
+}
