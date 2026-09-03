@@ -28,6 +28,7 @@
 | **HSK-EPIC-13** | Production Readiness Documentation (Requirement R5)           | **CLOSED** | Senior AI Pair | PR #19 (`hsk-13-production-readiness-docs`) |
 | **HSK-EPIC-14** | Requirement-Driven E2E Test Suite & Adversarial Hardening     | **CLOSED** | Senior AI Pair | Verified (100 Unit, 62 Smoke, 37 E2E)       |
 | **HSK-EPIC-15** | Brand Identity & Pro Logo/Favicon Design                      | **CLOSED** | Senior AI Pair | PR #22 (`hsk-16-logo-favicon`)              |
+| **HSK-EPIC-16** | Deployment Readiness Audit & Pre-flight Hygiene               | **CLOSED** | Senior AI Pair | PR #23 (`hsk-17-deploy-readiness-audit`)    |
 
 ---
 
@@ -65,6 +66,9 @@ Execute and complete the 5 core requirements (R1 through R5) plus requirement-dr
 |                                    |                                    |                                    |
 |                                    |                                    | [HSK-22] M7 Brand Identity Logo    |
 |                                    |                                    |          & Favicon Suite (Done)    |
+|                                    |                                    |                                    |
+|                                    |                                    | [HSK-23] Deploy Readiness Audit    |
+|                                    |                                    |          & Pre-flight Hygiene(Done)|
 +------------------------------------+------------------------------------+------------------------------------+
 ```
 
@@ -216,3 +220,22 @@ Execute and complete the 5 core requirements (R1 through R5) plus requirement-dr
   - [x] Wire favicon `<link>` tags in `<head>` of `apps/web/public/index.html`.
   - [x] Add CSS styling in `apps/web/public/styles.css` for responsive logo presentation.
   - [x] Verify browser rendering, smoke tests, unit tests, and dry-run bundles.
+
+---
+
+### [HSK-23] Production Deployment Readiness Audit & Pre-flight Hygiene
+
+- **Issue**: #23
+- **Branch**: `hsk-17-deploy-readiness-audit`
+- **Type**: Task / Operations & Audit
+- **Priority**: P0 (Highest)
+- **Status**: `DONE`
+- **Assignee**: Senior AI Pair
+- **Tasks**:
+- - [x] Audit Cloudflare Workers & Durable Objects deploy configuration (`wrangler.jsonc`, `package.json`).
+- - [x] Execute bundle dry-run for production (`wrangler deploy --dry-run`).
+- - [x] Execute bundle dry-run for staging (`wrangler deploy --env staging --dry-run`).
+- - [x] Verify Cloudflare account authentication (`wrangler whoami`).
+- - [x] Create `.prettierignore` and update `.gitignore` with `.workbuddy-ai/` to enforce 100% clean pre-flight verification (`pnpm check`).
+- - [x] Map the complete release ecosystem: Cloudflare, GitHub, Devpost, Demo Video hosting, and WebMCP agent ecosystem.
+- - [x] Compile comprehensive deploy readiness audit and operational guidance report.
