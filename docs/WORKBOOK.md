@@ -29,6 +29,7 @@
 | **HSK-EPIC-14** | Requirement-Driven E2E Test Suite & Adversarial Hardening     | **CLOSED** | Senior AI Pair | Verified (100 Unit, 62 Smoke, 37 E2E)       |
 | **HSK-EPIC-15** | Brand Identity & Pro Logo/Favicon Design                      | **CLOSED** | Senior AI Pair | PR #22 (`hsk-16-logo-favicon`)              |
 | **HSK-EPIC-16** | Deployment Readiness Audit & Pre-flight Hygiene               | **CLOSED** | Senior AI Pair | PR #23 (`hsk-17-deploy-readiness-audit`)    |
+| **HSK-EPIC-17** | GitHub Site Polish, Remote Sync & Verification                | **CLOSED** | Senior AI Pair | PR #24 (`hsk-18-github-site-polish`)        |
 
 ---
 
@@ -69,6 +70,9 @@ Execute and complete the 5 core requirements (R1 through R5) plus requirement-dr
 |                                    |                                    |                                    |
 |                                    |                                    | [HSK-23] Deploy Readiness Audit    |
 |                                    |                                    |          & Pre-flight Hygiene(Done)|
+|                                    |                                    |                                    |
+|                                    |                                    | [HSK-24] GitHub Site Polish, Sync  |
+|                                    |                                    |          & CI Verification (Done)  |
 +------------------------------------+------------------------------------+------------------------------------+
 ```
 
@@ -239,3 +243,22 @@ Execute and complete the 5 core requirements (R1 through R5) plus requirement-dr
 - - [x] Create `.prettierignore` and update `.gitignore` with `.workbuddy-ai/` to enforce 100% clean pre-flight verification (`pnpm check`).
 - - [x] Map the complete release ecosystem: Cloudflare, GitHub, Devpost, Demo Video hosting, and WebMCP agent ecosystem.
 - - [x] Compile comprehensive deploy readiness audit and operational guidance report.
+
+---
+
+### [HSK-24] GitHub Site Polish, Remote Sync & Verification
+
+- **Issue**: #24
+- **Branch**: `hsk-18-github-site-polish`
+- **Type**: Story / GitHub Operations
+- **Priority**: P0 (Highest)
+- **Status**: `DONE`
+- **Assignee**: Senior AI Pair
+- **Tasks**:
+- - [x] Push local `main` commits to GitHub `origin/main` (26 commits pushed).
+- - [x] Verify remote GitHub pull request #15 auto-merge status upon main branch convergence.
+- - [x] Monitor GitHub Actions CI workflow run `33808585198` to complete success on main.
+- - [x] Configure repository metadata: add searchable topics (`webmcp`, `cloudflare-workers`, `durable-objects`, `ai-agents`, `human-in-the-loop`, `typescript`, `consent-protocol`).
+- - [x] Enhance `README.md` with status badges for CI, License, TypeScript, Cloudflare Workers & Durable Objects, and WebMCP 2.0.0.
+- - [x] Run full local verification (`pnpm check`).
+- - [x] Open and merge PR for `hsk-18-github-site-polish` into `main` and push upstream.
