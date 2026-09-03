@@ -22,8 +22,8 @@
 | **HSK-EPIC-7**  | Release hardening and verification evidence                   | **CLOSED**      | Team           | PR #8 (`hsk-07-release-hardening`)          |
 | **HSK-EPIC-8**  | End-to-end production verification, browser testing & release | **CLOSED**      | Senior AI Pair | PR #10, #12, #14                            |
 | **HSK-EPIC-9**  | Kitchen-Bath Domain Integration (Requirement R1)              | **CLOSED**      | Senior AI Pair | PR #15 (`hsk-09-kitchen-bath-integration`)  |
-| **HSK-EPIC-10** | Production Frontend Polish (Requirement R2)                   | **IN PROGRESS** | Senior AI Pair | Branch `hsk-10-frontend-polish`             |
-| **HSK-EPIC-11** | Backend Hardening for Production Traffic (Requirement R3)     | **TO DO**       | Senior AI Pair | Branch `hsk-11-backend-hardening`           |
+| **HSK-EPIC-10** | Production Frontend Polish (Requirement R2)                   | **CLOSED**      | Senior AI Pair | PR #16 (`hsk-10-frontend-polish`)           |
+| **HSK-EPIC-11** | Backend Hardening for Production Traffic (Requirement R3)     | **IN PROGRESS** | Senior AI Pair | Branch `hsk-11-backend-hardening`           |
 | **HSK-EPIC-12** | CI/CD Pipeline & Deployment Automation (Requirement R4)       | **TO DO**       | Senior AI Pair | Branch `hsk-12-cicd-deployment`             |
 | **HSK-EPIC-13** | Production Readiness Documentation (Requirement R5)           | **TO DO**       | Senior AI Pair | Branch `hsk-13-production-readiness-docs`   |
 | **HSK-EPIC-14** | Requirement-Driven E2E Test Suite & Adversarial Hardening     | **CLOSED**      | Senior AI Pair | Verified (90 Unit, 62 Smoke, 37 E2E)        |
@@ -42,11 +42,13 @@ Execute and complete the 5 core requirements (R1 through R5) plus requirement-dr
 +------------------------------------+------------------------------------+------------------------------------+
 | TO DO                              | IN PROGRESS                        | DONE                               |
 +------------------------------------+------------------------------------+------------------------------------+
-| [HSK-17] M3 Backend Hardening      | [HSK-16] M2 Frontend Polish        | [HSK-1..14] Foundation, Core DO,   |
-| [HSK-18] M4 CI/CD Automation       |                                    |             WebMCP, Smoke & Runbook|
-| [HSK-19] M5 Production Docs        |                                    |                                    |
-| [HSK-21] M6 Adversarial Hardening  |                                    | [HSK-15] M1 Kitchen-Bath Domain    |
+| [HSK-18] M4 CI/CD Automation       | [HSK-17] M3 Backend Hardening      | [HSK-1..14] Foundation, Core DO,   |
+| [HSK-19] M5 Production Docs        |                                    |             WebMCP, Smoke & Runbook|
+| [HSK-21] M6 Adversarial Hardening  |                                    |                                    |
+|                                    |                                    | [HSK-15] M1 Kitchen-Bath Domain    |
 |                                    |                                    |          Integration (R1) (Done)   |
+|                                    |                                    |                                    |
+|                                    |                                    | [HSK-16] M2 Frontend Polish (Done) |
 |                                    |                                    |                                    |
 |                                    |                                    | [HSK-20] E2E Testing Suite Track   |
 |                                    |                                    |          (90 unit, 62 smoke, 37 e2e|
@@ -86,19 +88,19 @@ Execute and complete the 5 core requirements (R1 through R5) plus requirement-dr
 - **Branch**: `hsk-10-frontend-polish`
 - **Type**: Story / UX Polish
 - **Priority**: P1 (High)
-- **Status**: `IN PROGRESS`
+- **Status**: `DONE`
 - **Assignee**: Senior AI Pair
 - **Tasks**:
-  - [ ] Session reset button with confirmation dialog.
-  - [ ] Loading indicators and disabled states on API calls.
-  - [ ] Itemized Bill of Materials panel with costs and totals.
-  - [ ] Printable receipt and room spec view with `@media print`.
-  - [ ] Actionable error state handling using `ERROR_COPY`.
-  - [ ] Text + icon state badges (no color alone).
-  - [ ] Responsive 390px mobile layout without horizontal scroll.
-  - [ ] Complete keyboard-only golden journey navigation.
-  - [ ] Drag-and-drop fixture placement onto SVG canvas.
-  - [ ] WebMCP unavailable fallback notice banner.
+  - [x] Session reset button with confirmation dialog.
+  - [x] Loading indicators and disabled states on API calls.
+  - [x] Itemized Bill of Materials panel with costs and totals.
+  - [x] Printable receipt and room spec view with `@media print`.
+  - [x] Actionable error state handling using `ERROR_COPY`.
+  - [x] Text + icon state badges (no color alone).
+  - [x] Responsive 390px mobile layout without horizontal scroll.
+  - [x] Complete keyboard-only golden journey navigation.
+  - [x] Drag-and-drop fixture placement onto SVG canvas.
+  - [x] WebMCP unavailable fallback notice banner.
 
 ---
 
