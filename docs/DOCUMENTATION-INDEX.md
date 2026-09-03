@@ -14,5 +14,6 @@
 12. Deployment runbook — production deployment, operations, live verification, and release sign-off (`docs/DEPLOYMENT-RUNBOOK.md`).
 13. Engineering workbook — Jira-style epics, sprint boards, and task execution logs (`docs/WORKBOOK.md`).
 14. Production gap analysis & roadmap — full-stack gap matrices across 6 tracks, sprint backlogs, and maintenance guides (`docs/GAP-ANALYSIS.md`).
+15. REST API specification — developer reference for versioned HTTP API, error mapping, rate limits, and CORS headers (`docs/API.md`).
 
 Precedence: implementation decisions → machine-readable contracts → policy/state machine → specifications → code.
