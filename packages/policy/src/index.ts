@@ -38,12 +38,7 @@ import type {
   ToolError,
 } from '@handshake/contracts';
 import { fitsInsideRoom, footprintOf, overlaps, stripInFront } from './geometry';
-import {
-  buildBillOfMaterials,
-  evaluateGuidelines,
-  resolveProduct,
-  roomTypeOf,
-} from './guidelines';
+import { buildBillOfMaterials, evaluateGuidelines, resolveProduct, roomTypeOf } from './guidelines';
 import type { PlacedProduct } from './guidelines';
 
 export {
@@ -559,10 +554,7 @@ function findOverlapFindings(placed: readonly PlacedProduct[]): CheckFinding[] {
 }
 
 /** Finds product-preference clearance boundary and obstruction warnings. */
-function findClearanceFindings(
-  state: RoomState,
-  placed: readonly PlacedProduct[],
-): CheckFinding[] {
+function findClearanceFindings(state: RoomState, placed: readonly PlacedProduct[]): CheckFinding[] {
   const findings: CheckFinding[] = [];
   for (const entry of placed) {
     if (entry.product.clearanceIn <= 0) continue;
