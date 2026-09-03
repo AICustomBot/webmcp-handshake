@@ -398,26 +398,65 @@ const key = () => crypto.randomUUID();
 function announce(message) {
   $('status').textContent = message;
 }
-function showError(message = '') {
-  $('error').hidden = !message;
-  $('error').textContent = message;
+
+const ERROR_FRIENDLY = {
+  VERSION_CONFLICT:
+    'The design state was modified in another tab. We refreshed your canvas to the latest version.',
+  IDEMPOTENCY_CONFLICT: 'This action was already submitted. No duplicate changes were made.',
+  LIMIT_EXCEEDED: 'The request exceeds allowed room dimensions or item limits.',
+  CONFIRMATION_REQUIRED: 'Human confirmation is required before this action can proceed.',
+  RATE_LIMITED: 'Too many requests. Please wait a few seconds before trying again.',
+  FORBIDDEN_ACTOR: 'This action cannot be performed by the current actor channel.',
+};
+
+function showError(message = '', code = '') {
+  const friendly = ERROR_FRIENDLY[code] || message;
+  $('error').hidden = !friendly;
+  $('error').textContent = friendly;
+}
+
+function setBusy(isBusy, text = 'Updating studio…') {
+  const overlay = $('loading-overlay');
+  if (overlay) {
+    overlay.hidden = !isBusy;
+    if ($('loading-text')) $('loading-text').textContent = text;
+  }
+  const main = $('studio');
+  if (main) main.setAttribute('aria-busy', isBusy ? 'true' : 'false');
+  const buttons = document.querySelectorAll('button:not(#cancel-reset):not(#cancel-confirmation)');
+  buttons.forEach((btn) => {
+    if (isBusy) {
+      if (!btn.disabled) btn.dataset.wasEnabled = 'true';
+      btn.disabled = true;
+    } else {
+      if (btn.dataset.wasEnabled === 'true') {
+        btn.disabled = false;
+        delete btn.dataset.wasEnabled;
+      }
+    }
+  });
 }
 
 async function api(resource, method = 'GET', body) {
-  const headers = { 'x-handshake-capability': app.capability };
-  const options = { method, headers };
-  if (body !== undefined) {
-    headers['content-type'] = 'application/json';
-    options.body = JSON.stringify(body);
+  setBusy(true);
+  try {
+    const headers = { 'x-handshake-capability': app.capability };
+    const options = { method, headers };
+    if (body !== undefined) {
+      headers['content-type'] = 'application/json';
+      options.body = JSON.stringify(body);
+    }
+    const response = await fetch(
+      `/api/v1/sessions/${encodeURIComponent(app.sessionId)}/${resource}`,
+      options,
+    );
+    const payload = await response.json();
+    if (!payload.ok)
+      throw Object.assign(new Error(payload.error.message), { code: payload.error.code });
+    return payload.data;
+  } finally {
+    setBusy(false);
   }
-  const response = await fetch(
-    `/api/v1/sessions/${encodeURIComponent(app.sessionId)}/${resource}`,
-    options,
-  );
-  const payload = await response.json();
-  if (!payload.ok)
-    throw Object.assign(new Error(payload.error.message), { code: payload.error.code });
-  return payload.data;
 }
 
 async function createSession(roomType = 'bathroom') {
@@ -505,6 +544,72 @@ function renderCanvas() {
     group.append(shape, label);
     group.addEventListener('click', () => selectItem(item.id));
     group.addEventListener('focus', () => selectItem(item.id));
+
+    let drag = null;
+    group.addEventListener('pointerdown', (e) => {
+      selectItem(item.id);
+      const svg = $('room-canvas');
+      const rect = svg.getBoundingClientRect();
+      const scaleX = (app.state.widthIn + 8) / rect.width;
+      const scaleY = (app.state.lengthIn + 8) / rect.height;
+      drag = {
+        startX: e.clientX,
+        startY: e.clientY,
+        origX: item.x,
+        origY: item.y,
+        scaleX,
+        scaleY,
+        moved: false,
+      };
+      group.setPointerCapture(e.pointerId);
+    });
+    group.addEventListener('pointermove', (e) => {
+      if (!drag) return;
+      const dx = Math.round((e.clientX - drag.startX) * drag.scaleX);
+      const dy = Math.round((e.clientY - drag.startY) * drag.scaleY);
+      if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+        drag.moved = true;
+        const nextX = Math.max(0, Math.min(app.state.widthIn - size.width, drag.origX + dx));
+        const nextY = Math.max(0, Math.min(app.state.lengthIn - size.height, drag.origY + dy));
+        shape.setAttribute('x', String(nextX));
+        shape.setAttribute('y', String(nextY));
+        label.setAttribute('x', String(nextX + size.width / 2));
+        label.setAttribute('y', String(nextY + size.height / 2 + 1.5));
+        $('move-x').value = nextX;
+        $('move-y').value = nextY;
+      }
+    });
+    group.addEventListener('pointerup', async (e) => {
+      if (!drag) return;
+      group.releasePointerCapture(e.pointerId);
+      if (drag.moved) {
+        const finalX = parseInt($('move-x').value, 10);
+        const finalY = parseInt($('move-y').value, 10);
+        drag = null;
+        try {
+          await api('edits', 'POST', {
+            expectedVersion: app.state.version,
+            operations: [
+              {
+                type: 'move',
+                itemId: item.id,
+                x: finalX,
+                y: finalY,
+                rotation: item.rotation,
+              },
+            ],
+          });
+          await refresh();
+          announce(`Moved ${product(item.productId)?.name ?? 'item'} to (${finalX}, ${finalY}).`);
+        } catch (err) {
+          showError(err.message, err.code);
+          renderCanvas();
+        }
+      } else {
+        drag = null;
+      }
+    });
+
     layer.append(group);
   }
   for (const operation of app.proposal?.operations ?? []) {
@@ -839,5 +944,31 @@ $('zoom-out').addEventListener('click', () => {
   $('room-canvas').style.transform = `scale(${app.zoom})`;
   $('zoom-label').value = `${Math.round(app.zoom * 100)}%`;
 });
+$('reset-session')?.addEventListener('click', () => $('reset-dialog')?.showModal());
+$('confirm-reset')?.addEventListener('click', async () => {
+  $('reset-dialog')?.close();
+  setBusy(true, 'Creating fresh session…');
+  try {
+    sessionStorage.removeItem('handshake-session');
+    app.proposal = null;
+    app.selectedId = '';
+    const roomType = $('room-type-select')?.value ?? 'bathroom';
+    await createSession(roomType);
+    await refresh();
+    announce('New design session initialized.');
+  } catch (err) {
+    showError(`Could not reset session: ${err.message}`);
+  } finally {
+    setBusy(false);
+  }
+});
+$('cancel-reset')?.addEventListener('click', () => $('reset-dialog')?.close());
+$('print-summary')?.addEventListener('click', () => window.print());
+
+window.addEventListener('handshake:webmcp-unavailable', () => {
+  const banner = $('webmcp-banner');
+  if (banner) banner.hidden = false;
+});
+
 $('room-type-select')?.addEventListener('change', () => renderCatalog());
 boot();

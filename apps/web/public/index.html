@@ -20,11 +20,30 @@
       <div class="session-state">
         <span id="connection-dot" class="dot" aria-hidden="true"></span>
         <span id="connection-label">Starting secure session…</span>
+        <button
+          id="reset-session"
+          type="button"
+          class="secondary reset-btn"
+          aria-label="Start new session"
+        >
+          New session
+        </button>
       </div>
     </header>
 
     <div id="status" class="status-region" role="status" aria-live="polite"></div>
     <div id="error" class="error-region" role="alert" hidden></div>
+    <div id="webmcp-banner" class="notice-banner" hidden>
+      <span class="badge">Manual Co-Design</span>
+      <span
+        >In-browser WebMCP agent bridge not detected. Manual co-design studio active with 100%
+        consent safety.</span
+      >
+    </div>
+    <div id="loading-overlay" class="loading-overlay" hidden aria-live="assertive">
+      <div class="spinner" aria-hidden="true"></div>
+      <span id="loading-text">Updating studio…</span>
+    </div>
 
     <main id="studio" class="studio">
       <aside class="panel catalog-panel" aria-labelledby="catalog-title">
@@ -164,8 +183,15 @@
         <section class="evidence-actions" aria-labelledby="evidence-title">
           <p class="eyebrow">Exportable proof</p>
           <h2 id="evidence-title">Decision receipt</h2>
-          <p class="muted">Download the allowlisted synthetic session evidence as JSON.</p>
-          <button id="download-receipt" type="button">Download receipt</button>
+          <p class="muted">
+            Download the allowlisted synthetic session evidence as JSON or print for paper/PDF.
+          </p>
+          <div class="button-row">
+            <button id="download-receipt" type="button">Download receipt</button>
+            <button id="print-summary" class="secondary" type="button">
+              Print floorplan & quote
+            </button>
+          </div>
         </section>
       </aside>
     </main>
@@ -184,6 +210,18 @@
         <div class="button-row">
           <button id="confirm-action" class="primary" type="button">Confirm exact action</button>
           <button id="cancel-confirmation" value="cancel">Cancel</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="reset-dialog" aria-labelledby="reset-title">
+      <form method="dialog" class="confirmation-card">
+        <p class="eyebrow">Reset Studio</p>
+        <h2 id="reset-title">Start a new session?</h2>
+        <p>This will clear the current layout and create an isolated, fresh design session.</p>
+        <div class="button-row">
+          <button id="confirm-reset" class="danger" type="button">Yes, start new session</button>
+          <button id="cancel-reset" value="cancel">Cancel</button>
         </div>
       </form>
     </dialog>
