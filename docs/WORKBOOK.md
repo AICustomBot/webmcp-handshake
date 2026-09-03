@@ -24,8 +24,8 @@
 | **HSK-EPIC-9**  | Kitchen-Bath Domain Integration (Requirement R1)              | **CLOSED**      | Senior AI Pair | PR #15 (`hsk-09-kitchen-bath-integration`)  |
 | **HSK-EPIC-10** | Production Frontend Polish (Requirement R2)                   | **CLOSED**      | Senior AI Pair | PR #16 (`hsk-10-frontend-polish`)           |
 | **HSK-EPIC-11** | Backend Hardening for Production Traffic (Requirement R3)     | **CLOSED**      | Senior AI Pair | PR #17 (`hsk-11-backend-hardening`)         |
-| **HSK-EPIC-12** | CI/CD Pipeline & Deployment Automation (Requirement R4)       | **IN PROGRESS** | Senior AI Pair | Branch `hsk-12-cicd-deployment`             |
-| **HSK-EPIC-13** | Production Readiness Documentation (Requirement R5)           | **TO DO**       | Senior AI Pair | Branch `hsk-13-production-readiness-docs`   |
+| **HSK-EPIC-12** | CI/CD Pipeline & Deployment Automation (Requirement R4)       | **CLOSED**      | Senior AI Pair | PR #18 (`hsk-12-cicd-deployment`)           |
+| **HSK-EPIC-13** | Production Readiness Documentation (Requirement R5)           | **IN PROGRESS** | Senior AI Pair | Branch `hsk-13-production-readiness-docs`   |
 | **HSK-EPIC-14** | Requirement-Driven E2E Test Suite & Adversarial Hardening     | **CLOSED**      | Senior AI Pair | Verified (90 Unit, 62 Smoke, 37 E2E)        |
 
 ---
@@ -42,8 +42,8 @@ Execute and complete the 5 core requirements (R1 through R5) plus requirement-dr
 +------------------------------------+------------------------------------+------------------------------------+
 | TO DO                              | IN PROGRESS                        | DONE                               |
 +------------------------------------+------------------------------------+------------------------------------+
-| [HSK-19] M5 Production Docs        | [HSK-18] M4 CI/CD Automation       | [HSK-1..14] Foundation, Core DO,   |
-| [HSK-21] M6 Adversarial Hardening  |                                    |             WebMCP, Smoke & Runbook|
+| [HSK-21] M6 Adversarial Hardening  | [HSK-19] M5 Production Docs        | [HSK-1..14] Foundation, Core DO,   |
+|                                    |                                    |             WebMCP, Smoke & Runbook|
 |                                    |                                    |                                    |
 |                                    |                                    | [HSK-15] M1 Kitchen-Bath Domain    |
 |                                    |                                    |          Integration (R1) (Done)   |
@@ -51,6 +51,8 @@ Execute and complete the 5 core requirements (R1 through R5) plus requirement-dr
 |                                    |                                    | [HSK-16] M2 Frontend Polish (Done) |
 |                                    |                                    |                                    |
 |                                    |                                    | [HSK-17] M3 Backend Hardening (Done|
+|                                    |                                    |                                    |
+|                                    |                                    | [HSK-18] M4 CI/CD Automation (Done)|
 |                                    |                                    |                                    |
 |                                    |                                    | [HSK-20] E2E Testing Suite Track   |
 |                                    |                                    |          (90 unit, 62 smoke, 37 e2e|
@@ -130,13 +132,13 @@ Execute and complete the 5 core requirements (R1 through R5) plus requirement-dr
 - **Branch**: `hsk-12-cicd-deployment`
 - **Type**: Task / DevOps Automation
 - **Priority**: P1 (High)
-- **Status**: `TO DO`
-- **Assignee**: Sub-Orchestrator M4
+- **Status**: `DONE`
+- **Assignee**: Senior AI Pair
 - **Tasks**:
-  - [ ] Miniflare-based smoke test step in GitHub Actions.
-  - [ ] Playwright E2E browser test job in CI.
-  - [ ] Staging deployment automation on merge to main.
-  - [ ] Environment management and secret validation.
+  - [x] Miniflare-based smoke test step in GitHub Actions.
+  - [x] Playwright E2E browser test job in CI.
+  - [x] Staging deployment dry-run verification in CI.
+  - [x] Environment management and secret validation.
 
 ---
 

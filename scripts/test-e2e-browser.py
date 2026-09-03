@@ -31,7 +31,11 @@ def assert_check(condition, message):
 print(f"\n🎭 Starting Handshake E2E Browser & Accessibility Suite on: {BASE_URL}\n")
 
 with sync_playwright() as p:
-    browser = p.chromium.launch(channel="chrome", headless=True)
+    channel = os.getenv("E2E_BROWSER_CHANNEL", "chrome")
+    launch_kwargs = {"headless": True}
+    if channel and channel != "default":
+        launch_kwargs["channel"] = channel
+    browser = p.chromium.launch(**launch_kwargs)
     
     # Desktop Studio Context
     context = browser.new_context(viewport={"width": 1280, "height": 800})
