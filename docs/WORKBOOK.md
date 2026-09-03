@@ -30,14 +30,15 @@
 | **HSK-EPIC-15** | Brand Identity & Pro Logo/Favicon Design                      | **CLOSED** | Senior AI Pair | PR #22 (`hsk-16-logo-favicon`)              |
 | **HSK-EPIC-16** | Deployment Readiness Audit & Pre-flight Hygiene               | **CLOSED** | Senior AI Pair | PR #23 (`hsk-17-deploy-readiness-audit`)    |
 | **HSK-EPIC-17** | GitHub Site Polish, Remote Sync & Verification                | **CLOSED** | Senior AI Pair | PR #24 (`hsk-18-github-site-polish`)        |
+| **HSK-EPIC-18** | Next.js 16 & 3D Studio Migration to Vercel                    | **ACTIVE** | Senior AI Pair | Sprint 6 (HSK-25..32)                       |
 
 ---
 
-## 2. Active Sprint Board (Sprint 5: Production Readiness & Visual Polish)
+## 2. Active Sprint Board (Sprint 6: Next.js 16 & React Three Fiber 3D Studio)
 
 ### Sprint Goal
 
-Execute and complete the 5 core requirements (R1 through R5) plus requirement-driven E2E testing and professional brand identity design: merge the full kitchen-bath planning domain (+2,294 lines, 90 tests), expand catalog to 16 items with NKBA metadata, polish frontend with BOM, reset, loading, and accessible UI, harden backend with rate limiting and CORS, automate CI/CD with Miniflare smoke and Playwright E2E, publish complete gap analysis documentation, and deliver a modern vector logo and multi-resolution favicon suite.
+Migrate Handshake's frontend to a production Next.js 16+ App Router application deployed to Vercel. Transform the studio into a real-time architectural and 3D design environment (React Three Fiber, Drei, Rapier) supporting full Kitchen & Bath functionality (procedural parametric cabinets, appliances, fixtures, materials, walkthrough/orbit cameras, and dimension lines). Retain Cloudflare Workers + Durable Objects as the authoritative stateful edge consensus backend via Vercel proxy rewrites. Preserve all constitutional invariants (non-mutating proposals, page-owned human consent barriers, single-use proofs, tamper-evident receipts) and integrate the WebMCP bridge + Vercel AI SDK copilot.
 
 ### Task Board
 
@@ -45,34 +46,26 @@ Execute and complete the 5 core requirements (R1 through R5) plus requirement-dr
 +------------------------------------+------------------------------------+------------------------------------+
 | TO DO                              | IN PROGRESS                        | DONE                               |
 +------------------------------------+------------------------------------+------------------------------------+
-|                                    |                                    | [HSK-1..14] Foundation, Core DO,   |
-|                                    |                                    |             WebMCP, Smoke & Runbook|
+| [HSK-26] Next.js 16 App Scaffold   |                                    | [HSK-1..24] Sprints 1–5 Closed     |
+|          & Monorepo Integration    |                                    |             (Full K&B Domain, DO,  |
+|                                    |                                    |              WebMCP, Hardening)    |
+| [HSK-27] API Client, Proxy Rewrites|                                    |                                    |
+|          & DO Session State Sync   |                                    | [HSK-25] ADR-0005 Next.js Frontend |
+|                                    |                                    |          on Vercel Architecture    |
+| [HSK-28] 2D Architectural Floorplan|                                    |                                    |
+|          & Fixture Drag-and-Drop   |                                    |                                    |
 |                                    |                                    |                                    |
-|                                    |                                    | [HSK-15] M1 Kitchen-Bath Domain    |
-|                                    |                                    |          Integration (R1) (Done)   |
+| [HSK-29] React Three Fiber 3D      |                                    |                                    |
+|          Parametric Studio Canvas  |                                    |                                    |
 |                                    |                                    |                                    |
-|                                    |                                    | [HSK-16] M2 Frontend Polish (Done) |
+| [HSK-30] WebMCP Bridge & Vercel    |                                    |                                    |
+|          AI SDK Copilot Integration|                                    |                                    |
 |                                    |                                    |                                    |
-|                                    |                                    | [HSK-17] M3 Backend Hardening (Done|
+| [HSK-31] Enterprise Studio UX: BOM,|                                    |                                    |
+|          NKBA Checks, Consent Gates|                                    |                                    |
 |                                    |                                    |                                    |
-|                                    |                                    | [HSK-18] M4 CI/CD Automation (Done)|
-|                                    |                                    |                                    |
-|                                    |                                    | [HSK-19] M5 Production Docs (Done) |
-|                                    |                                    |                                    |
-|                                    |                                    | [HSK-20] E2E Testing Suite Track   |
-|                                    |                                    |          (100 unit, 62 smoke, 37 e2|
-|                                    |                                    |                                    |
-|                                    |                                    | [HSK-21] M6 Adversarial Hardening  |
-|                                    |                                    |          (7 constitutional tests)  |
-|                                    |                                    |                                    |
-|                                    |                                    | [HSK-22] M7 Brand Identity Logo    |
-|                                    |                                    |          & Favicon Suite (Done)    |
-|                                    |                                    |                                    |
-|                                    |                                    | [HSK-23] Deploy Readiness Audit    |
-|                                    |                                    |          & Pre-flight Hygiene(Done)|
-|                                    |                                    |                                    |
-|                                    |                                    | [HSK-24] GitHub Site Polish, Sync  |
-|                                    |                                    |          & CI Verification (Done)  |
+| [HSK-32] Vercel Deploy Automation  |                                    |                                    |
+|          & Full Stack Verification |                                    |                                    |
 +------------------------------------+------------------------------------+------------------------------------+
 ```
 
@@ -262,3 +255,147 @@ Execute and complete the 5 core requirements (R1 through R5) plus requirement-dr
 - - [x] Enhance `README.md` with status badges for CI, License, TypeScript, Cloudflare Workers & Durable Objects, and WebMCP 2.0.0.
 - - [x] Run full local verification (`pnpm check`).
 - - [x] Open and merge PR for `hsk-18-github-site-polish` into `main` and push upstream.
+
+---
+
+## 4. Sprint 6: Next.js 16 & React Three Fiber 3D Studio (HSK-EPIC-18)
+
+### [HSK-25] Architecture Decision Record: Next.js on Vercel (ADR-0005)
+
+- **Issue**: #25
+- **Branch**: `hsk-19-nextjs-migration-plan`
+- **Type**: Story / Architecture
+- **Priority**: P0 (Highest)
+- **Status**: `DONE`
+- **Assignee**: Senior Architect & Engineer
+- **Tasks**:
+  - [x] Author `docs/decisions/ADR-0005-vercel-nextjs-frontend.md` defining decoupled frontend/backend topology.
+  - [x] Index ADR-0005 in `docs/IMPLEMENTATION-DECISIONS.md`.
+  - [x] Define Vercel rewrites proxy strategy vs direct CORS communication.
+  - [x] Establish invariant preservation protocol for WebMCP and page-owned human consent gates.
+
+---
+
+### [HSK-26] Next.js 16 App Scaffold & Monorepo Integration
+
+- **Issue**: #26
+- **Branch**: `hsk-20-nextjs-scaffold`
+- **Type**: Story / Frontend Infrastructure
+- **Priority**: P0 (Highest)
+- **Status**: `PLANNED`
+- **Assignee**: Senior Frontend Engineer
+- **Tasks**:
+  - [ ] Initialize Next.js 16 App Router application in `apps/web` with React 19 and TypeScript.
+  - [ ] Configure Tailwind CSS, postcss, and Geist font family.
+  - [ ] Link monorepo dependencies (`@handshake/contracts`, `@handshake/policy`) via `workspace:*`.
+  - [ ] Configure `next.config.ts` with Vercel rewrites proxying `/api/v1/:path*` to Cloudflare Worker.
+  - [ ] Migrate static brand assets (`logo.svg`, favicons, brand illustrations) to `apps/web/public/`.
+  - [ ] Verify root package scripts (`pnpm dev`, `pnpm build`, `pnpm check`).
+
+---
+
+### [HSK-27] API Client, Proxy Rewrites & DO Session State Sync
+
+- **Issue**: #27
+- **Branch**: `hsk-21-api-client-state-sync`
+- **Type**: Story / Client Infrastructure
+- **Priority**: P0 (Highest)
+- **Status**: `PLANNED`
+- **Assignee**: Senior Frontend Engineer
+- **Tasks**:
+  - [ ] Implement typed API client (`lib/api-client.ts`) covering all 10 worker endpoints.
+  - [ ] Enforce session capability header (`x-handshake-capability`) and error envelope mapping (`isErrorCode`).
+  - [ ] Build central Zustand studio store (`lib/store/studio-store.ts`) for session state, active proposal, zoom, selection, and viewport mode.
+  - [ ] Implement session persistence with local/session storage recovery and atomic reset action.
+  - [ ] Unit test API client with mock fetch responses verifying version mismatch (409) and rate limit (429) handling.
+
+---
+
+### [HSK-28] 2D Architectural Floorplan & Fixture Drag-and-Drop
+
+- **Issue**: #28
+- **Branch**: `hsk-22-2d-architectural-canvas`
+- **Type**: Story / 2D Studio Component
+- **Priority**: P1 (High)
+- **Status**: `PLANNED`
+- **Assignee**: Senior Frontend Engineer
+- **Tasks**:
+  - [ ] Build React 2D floorplan canvas component (`components/studio/canvas-2d.tsx`).
+  - [ ] Render wall framing layers with thickness, interior dimensions, and grid units (12-inch snap).
+  - [ ] Render door swings, window openings, and wall cutouts (`openings-layer`).
+  - [ ] Render utility service anchors (water, drain, gas, 120V/240V electric, vent).
+  - [ ] Implement pointer drag-and-drop fixture movement with boundary clamping and coordinate snapping.
+  - [ ] Render amber dashed proposal shapes with non-mutating preview guarantees.
+
+---
+
+### [HSK-29] React Three Fiber (R3F) 3D Studio Visualizer
+
+- **Issue**: #29
+- **Branch**: `hsk-23-r3f-3d-visualizer`
+- **Type**: Story / 3D Graphics
+- **Priority**: P0 (Highest)
+- **Status**: `PLANNED`
+- **Assignee**: 3D Graphics & Senior Frontend Engineer
+- **Tasks**:
+  - [ ] Scaffold `<Canvas3D>` component using `@react-three/fiber` and `@react-three/drei` with SSR dynamic loading (`next/dynamic ssr: false`).
+  - [ ] Build procedural parametric 3D models for all 16 catalog items:
+    - Base, wall, and tall kitchen cabinets with door/drawer geometry and countertop slabs.
+    - Appliances (refrigerator with door swing, range with cooktop burners, hood, dishwasher).
+    - Bathroom fixtures (vanity with undermount sink, freestanding tub, open glass shower, toilet).
+  - [ ] Build 3D wall extrusion with window and door opening cutouts.
+  - [ ] Implement PBR materials (matte white, shaker gray, walnut woodgrain, quartz countertop, brushed brass, matte black metal).
+  - [ ] Multi-camera controller: OrbitControls (3D perspective fly-around), First-Person (walkthrough / eye-level 60" elevation), and Orthographic top-down plan.
+  - [ ] Studio lighting setup: directional sunlight through modeled windows, soft ambient fill, and contact shadows.
+
+---
+
+### [HSK-30] WebMCP Bridge & Vercel AI SDK Copilot Integration
+
+- **Issue**: #30
+- **Branch**: `hsk-24-webmcp-ai-sdk`
+- **Type**: Story / AI Agent Integration
+- **Priority**: P0 (Highest)
+- **Status**: `PLANNED`
+- **Assignee**: AI Engineer & Senior Architect
+- **Tasks**:
+  - [ ] Implement `useWebMCP` React hook to register all 9 contracted tools on `document.modelContext` with mount/unmount lifecycle cleanup.
+  - [ ] Build in-app AI Copilot chat drawer using Vercel AI SDK (`ai` v6, `useChat`).
+  - [ ] Expose the 9 contracted tools to the AI Copilot via client tool execution calling the studio store and Worker API.
+  - [ ] Enforce consent gate in copilot: agent calls produce non-mutating proposals only; UI renders human approval action cards.
+  - [ ] Fallback banner when neither WebMCP nor AI copilot key is present.
+
+---
+
+### [HSK-31] Enterprise Studio UX: BOM, NKBA Checks & Consent Gates
+
+- **Issue**: #31
+- **Branch**: `hsk-25-enterprise-studio-ux`
+- **Type**: Story / UX & Design
+- **Priority**: P1 (High)
+- **Status**: `PLANNED`
+- **Assignee**: Senior UX Engineer
+- **Tasks**:
+  - [ ] Bill of Materials (BOM) interactive summary panel with unit costs, item counts, SKUs, and remaining budget tracker.
+  - [ ] Real-time NKBA layout findings overlay (blocked errors, warnings, info badges) with citations.
+  - [ ] Proposal review card with exact operation diffs, SHA-256 hash preview, and human Approve/Reject controls.
+  - [ ] Protected action confirmation modal (`<dialog>`) generating single-use proof tokens.
+  - [ ] Tamper-evident decision receipt export (JSON download and print-ready summary view).
+  - [ ] High-resolution 3D canvas snapshot capture (`.toDataURL('image/png')`) for client design presentations.
+
+---
+
+### [HSK-32] Vercel Deployment Automation & Full-Stack Verification
+
+- **Issue**: #32
+- **Branch**: `hsk-26-vercel-deploy-verification`
+- **Type**: Task / DevOps & QA
+- **Priority**: P0 (Highest)
+- **Status**: `PLANNED`
+- **Assignee**: Infra Expert & Senior QA
+- **Tasks**:
+  - [ ] Create `vercel.json` with build commands, output directory, and API rewrites.
+  - [ ] Update `.github/workflows/ci.yml` to test both Next.js build (`pnpm --filter web build`) and Cloudflare Worker.
+  - [ ] Configure environment variables (`NEXT_PUBLIC_CLOUDFLARE_WORKER_URL`, `NEXT_PUBLIC_CONTRACT_VERSION`).
+  - [ ] Run Playwright E2E browser test suite against Next.js studio (verifying 2D canvas, 3D WebGL context, proposal flow, and receipt export).
+  - [ ] Prepare Vercel project linking guide and manual release checklist for Ehab.
