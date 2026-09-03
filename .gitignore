@@ -8,6 +8,7 @@ coverage/
 .DS_Store
 *.swp
 .agents/
+.workbuddy-ai/
 ORIGINAL_REQUEST.md
 PROJECT.md
 artifacts/
