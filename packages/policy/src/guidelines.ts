@@ -530,9 +530,7 @@ function evaluateShared(
   const wantsAccess = placed.some((entry) => entry.product.accessible);
   if (wantsAccess) {
     const turningIn =
-      roomType === 'kitchen'
-        ? KITCHEN_GUIDELINES.turningCircleIn
-        : BATH_GUIDELINES.turningCircleIn;
+      roomType === 'kitchen' ? KITCHEN_GUIDELINES.turningCircleIn : BATH_GUIDELINES.turningCircleIn;
     const occupied = floorItems.map((entry) => entry.box);
     if (!hasClearSquare(state, occupied, turningIn)) {
       findings.push({
