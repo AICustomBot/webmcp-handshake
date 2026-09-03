@@ -1,6 +1,10 @@
-# Handshake
+<p align="center">
+  <img src="apps/web/public/logo.svg" alt="Handshake Logo" width="300" />
+</p>
 
-**Design together. Approve with proof.**
+<p align="center">
+  <strong>Design together. Approve with proof.</strong>
+</p>
 
 Handshake is a WebMCP-enabled kitchen and bath co-design workspace where a person and an in-browser AI agent collaborate on the same room plan. The agent can inspect state, search a synthetic catalog, run deterministic budget and clearance checks, and propose edits. It cannot silently mutate the approved design or perform consequential actions. Every protected action crosses a visible, page-owned consent gate and produces an evidence receipt.
 
