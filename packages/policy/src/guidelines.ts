@@ -57,7 +57,7 @@ import {
   touches,
   wallLength,
 } from './geometry';
-import type { Footprint, Vector } from './geometry';
+import type { Footprint, Point, Vector } from './geometry';
 
 /**
  * How far a fixture may sit from an existing service location before the
@@ -308,6 +308,29 @@ function rectDistance(a: Footprint, b: Footprint): number {
   return Math.hypot(dx, dy);
 }
 
+/**
+ * Returns the distance to the nearest matching service anchor, or infinity when
+ * no anchor of that kind was modelled.
+ *
+ * Reporting the real distance is what makes the finding auditable: "the nearest
+ * drain is 82 in away" can be checked against the drawing, whereas repeating
+ * the reach limit back to the reader proves nothing.
+ */
+function nearestAnchorDistance(
+  state: RoomState,
+  center: Point,
+  anchors: readonly ServiceAnchor[],
+  matches: (anchor: ServiceAnchor) => boolean,
+): number {
+  let best = Number.POSITIVE_INFINITY;
+  for (const anchor of anchors) {
+    if (!matches(anchor)) continue;
+    const point = pointOnWall(state, anchor.wall, anchor.offsetIn);
+    best = Math.min(best, distanceBetween(center, point));
+  }
+  return best;
+}
+
 /** Returns the unit vector to the left of someone facing the item. */
 function leftOf(front: Vector): Vector {
   return { x: -front.y, y: front.x };
@@ -404,6 +427,7 @@ function evaluateShared(
         openingIds: [opening.id],
         measuredIn: opening.offsetIn + opening.widthIn,
         recommendedIn: span,
+        guideline: GUIDELINE_SOURCE,
       });
       continue;
     }
@@ -461,7 +485,11 @@ function evaluateShared(
     for (let j = i + 1; j < swingers.length; j += 1) {
       const second = swingers[j];
       if (second === undefined) continue;
-      const secondSwing = stripInFront(second.box, second.item.rotation, second.product.doorSwingIn);
+      const secondSwing = stripInFront(
+        second.box,
+        second.item.rotation,
+        second.product.doorSwingIn,
+      );
       if (!overlaps(firstSwing, secondSwing)) continue;
       findings.push({
         code: 'APPLIANCE_DOOR_CONFLICT',
@@ -492,38 +520,47 @@ function evaluateShared(
       if (entry.product.requiresVenting) needed.push('vent');
       const center = centerOf(entry.box);
       for (const kind of needed) {
-        const reachable = anchors.some(
-          (anchor) =>
-            anchor.kind === kind &&
-            distanceBetween(center, pointOnWall(state, anchor.wall, anchor.offsetIn)) <=
-              SERVICE_REACH_IN,
+        const nearestIn = nearestAnchorDistance(
+          state,
+          center,
+          anchors,
+          (anchor) => anchor.kind === kind,
         );
-        if (reachable) continue;
-        findings.push({
+        if (nearestIn <= SERVICE_REACH_IN) continue;
+        const finding: CheckFinding = {
           code: 'MISSING_SERVICE_ANCHOR',
           severity: 'warning',
           message: `${entry.product.name} needs ${kind.replace(/_/g, ' ')} and there is no existing ${kind.replace(/_/g, ' ')} location within ${SERVICE_REACH_IN} in of it.`,
           itemIds: [entry.item.id],
-          measuredIn: SERVICE_REACH_IN,
-        });
+          recommendedIn: SERVICE_REACH_IN,
+          guideline: GUIDELINE_SOURCE,
+        };
+        if (Number.isFinite(nearestIn)) finding.measuredIn = Number(nearestIn.toFixed(1));
+        findings.push(finding);
       }
       if (!entry.product.requiresElectrical) continue;
-      const powered = anchors.some(
+      const nearestPowerIn = nearestAnchorDistance(
+        state,
+        center,
+        anchors,
         (anchor) =>
-          (anchor.kind === 'electrical_120v' ||
-            anchor.kind === 'electrical_240v' ||
-            anchor.kind === 'gas') &&
-          distanceBetween(center, pointOnWall(state, anchor.wall, anchor.offsetIn)) <=
-            SERVICE_REACH_IN,
+          anchor.kind === 'electrical_120v' ||
+          anchor.kind === 'electrical_240v' ||
+          anchor.kind === 'gas',
       );
-      if (powered) continue;
-      findings.push({
+      if (nearestPowerIn <= SERVICE_REACH_IN) continue;
+      const powerFinding: CheckFinding = {
         code: 'MISSING_SERVICE_ANCHOR',
         severity: 'warning',
         message: `${entry.product.name} needs a power or gas supply and there is none within ${SERVICE_REACH_IN} in of it.`,
         itemIds: [entry.item.id],
-        measuredIn: SERVICE_REACH_IN,
-      });
+        recommendedIn: SERVICE_REACH_IN,
+        guideline: GUIDELINE_SOURCE,
+      };
+      if (Number.isFinite(nearestPowerIn)) {
+        powerFinding.measuredIn = Number(nearestPowerIn.toFixed(1));
+      }
+      findings.push(powerFinding);
     }
   }
 
@@ -567,6 +604,7 @@ function evaluateKitchen(state: RoomState, placed: readonly PlacedProduct[]): Ch
       severity: 'info',
       message: `This kitchen has no ${required === 'cooktop' ? 'cooking surface' : required} yet, so the work triangle cannot be checked.`,
       itemIds: [],
+      guideline: GUIDELINE_SOURCE,
     });
   }
 
