@@ -370,22 +370,22 @@ export class DesignSession extends DurableObject<Env> {
         });
       }
       if (url.pathname === '/proposals' && request.method === 'POST') {
-        return this.createProposal(request, requestId, session, actor);
+        return await this.createProposal(request, requestId, session, actor);
       }
       if (url.pathname === '/decisions' && request.method === 'POST') {
-        return this.decide(request, requestId, session, actor);
+        return await this.decide(request, requestId, session, actor);
       }
       if (url.pathname === '/apply' && request.method === 'POST') {
-        return this.apply(request, requestId, session);
+        return await this.apply(request, requestId, session);
       }
       if (url.pathname === '/edits' && request.method === 'POST') {
-        return this.edit(request, requestId, session, actor);
+        return await this.edit(request, requestId, session, actor);
       }
       if (url.pathname === '/confirmations' && request.method === 'POST') {
-        return this.confirm(request, requestId, session, actor);
+        return await this.confirm(request, requestId, session, actor);
       }
       if (url.pathname === '/protected-actions' && request.method === 'POST') {
-        return this.protectedAction(request, requestId, session, actor);
+        return await this.protectedAction(request, requestId, session, actor);
       }
       if (url.pathname === '/receipt' && request.method === 'GET') {
         return this.receipt(requestId, session);

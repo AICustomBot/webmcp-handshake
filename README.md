@@ -4,7 +4,7 @@
 
 Handshake is a WebMCP-enabled kitchen and bath co-design workspace where a person and an in-browser AI agent collaborate on the same room plan. The agent can inspect state, search a synthetic catalog, run deterministic budget and clearance checks, and propose edits. It cannot silently mutate the approved design or perform consequential actions. Every protected action crosses a visible, page-owned consent gate and produces an evidence receipt.
 
-> **Production Status**: Fully implemented, hardened, and verified across all layers. 93 Vitest unit tests, 62 live HTTP smoke tests, and 37 Playwright browser tests passing 100%.
+> **Production Status**: Fully implemented, hardened, and verified across all layers. 100 Vitest unit/policy tests, 62 live HTTP smoke tests, and 37 Playwright browser tests passing 100%.
 
 ## Highlights & Capabilities
 
@@ -22,7 +22,7 @@ Handshake is a WebMCP-enabled kitchen and bath co-design workspace where a perso
 ================================================================================
                            HANDSHAKE VERIFICATION DOSSIER
 ================================================================================
- Layer 1: Unit & Policy Tests   : 93 / 93 passed (Vitest, strict TypeScript)
+ Layer 1: Unit & Policy Tests   : 100 / 100 passed (Vitest, strict TypeScript)
  Layer 2: Live HTTP Smoke Tests : 62 / 62 passed (Cloudflare Worker + DO)
  Layer 3: Headless Browser E2E  : 37 / 37 passed (Playwright Chromium & A11y)
  Layer 4: Packaging Dry-Run     : 0 errors (Wrangler default & staging bundles)

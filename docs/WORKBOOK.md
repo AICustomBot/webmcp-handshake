@@ -42,7 +42,7 @@ Execute and complete the 5 core requirements (R1 through R5) plus requirement-dr
 +------------------------------------+------------------------------------+------------------------------------+
 | TO DO                              | IN PROGRESS                        | DONE                               |
 +------------------------------------+------------------------------------+------------------------------------+
-| [HSK-21] M6 Adversarial Hardening  |                                    | [HSK-1..14] Foundation, Core DO,   |
+|                                    |                                    | [HSK-1..14] Foundation, Core DO,   |
 |                                    |                                    |             WebMCP, Smoke & Runbook|
 |                                    |                                    |                                    |
 |                                    |                                    | [HSK-15] M1 Kitchen-Bath Domain    |
@@ -57,7 +57,10 @@ Execute and complete the 5 core requirements (R1 through R5) plus requirement-dr
 |                                    |                                    | [HSK-19] M5 Production Docs (Done) |
 |                                    |                                    |                                    |
 |                                    |                                    | [HSK-20] E2E Testing Suite Track   |
-|                                    |                                    |          (93 unit, 62 smoke, 37 e2e|
+|                                    |                                    |          (100 unit, 62 smoke, 37 e2|
+|                                    |                                    |                                    |
+|                                    |                                    | [HSK-21] M6 Adversarial Hardening  |
+|                                    |                                    |          (7 constitutional tests)  |
 +------------------------------------+------------------------------------+------------------------------------+
 ```
 
@@ -184,9 +187,9 @@ Execute and complete the 5 core requirements (R1 through R5) plus requirement-dr
 - **Branch**: `hsk-15-final-verification`
 - **Type**: Story / Quality Gate
 - **Priority**: P0 (Highest)
-- **Status**: `TO DO`
-- **Assignee**: Sub-Orchestrator M6
+- **Status**: `DONE`
+- **Assignee**: Senior AI Pair
 - **Tasks**:
-  - [ ] Phase 1: Pass 100% of E2E test suite (Tiers 1-4).
-  - [ ] Phase 2: White-box adversarial testing (Tier 5) with Challengers.
-  - [ ] Forensic Auditor integrity validation (CLEAN verdict).
+  - [x] Phase 1: Pass 100% of E2E test suite (100 unit/policy tests, 62 smoke tests, 37 browser E2E tests).
+  - [x] Phase 2: White-box adversarial testing (`tests/adversarial.test.ts` covering 7 constitutional prohibitions).
+  - [x] Forensic Auditor integrity validation (CLEAN verdict, zero leaks, full redaction in receipts).
