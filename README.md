@@ -6,6 +6,14 @@
   <strong>Design together. Approve with proof.</strong>
 </p>
 
+<p align="center">
+  <a href="https://github.com/AICustomBot/webmcp-handshake/actions/workflows/ci.yml"><img src="https://github.com/AICustomBot/webmcp-handshake/actions/workflows/ci.yml/badge.svg" alt="CI Status" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License" /></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.x-blue.svg" alt="TypeScript" /></a>
+  <a href="https://workers.cloudflare.com"><img src="https://img.shields.io/badge/Cloudflare-Workers_Durable_Objects-F38020?logo=cloudflare&logoColor=white" alt="Cloudflare Workers" /></a>
+  <a href="docs/WEBMCP-TOOL-CONTRACTS.md"><img src="https://img.shields.io/badge/WebMCP-2.0.0-success.svg" alt="WebMCP 2.0.0" /></a>
+</p>
+
 Handshake is a WebMCP-enabled kitchen and bath co-design workspace where a person and an in-browser AI agent collaborate on the same room plan. The agent can inspect state, search a synthetic catalog, run deterministic budget and clearance checks, and propose edits. It cannot silently mutate the approved design or perform consequential actions. Every protected action crosses a visible, page-owned consent gate and produces an evidence receipt.
 
 > **Production Status**: Fully implemented, hardened, and verified across all layers. 100 Vitest unit/policy tests, 62 live HTTP smoke tests, and 37 Playwright browser tests passing 100%.
