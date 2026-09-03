@@ -11,22 +11,22 @@
 
 ## 1. Epics Overview
 
-| Epic Key        | Summary                                                       | Status          | Assignee       | Pull Request / Branch                       |
-| :-------------- | :------------------------------------------------------------ | :-------------- | :------------- | :------------------------------------------ |
-| **HSK-EPIC-1**  | Foundation validation, scaffold sync, toolchain corrections   | **CLOSED**      | Ehab           | PR #1 (`hsk-01-foundation-validation`)      |
-| **HSK-EPIC-2**  | Freeze contracts and implement consent policy engine          | **CLOSED**      | Team           | PR #3 (`hsk-02-contracts-policy`)           |
-| **HSK-EPIC-3**  | Implement Worker and Durable Object session runtime           | **CLOSED**      | Team           | PR #4 (`hsk-03-worker-runtime`)             |
-| **HSK-EPIC-4**  | Shared canvas, exact proposal review, runtime hardening       | **CLOSED**      | Team           | PR #5 (`hsk-04-shared-canvas`)              |
-| **HSK-EPIC-5**  | Register the governed WebMCP tool surface                     | **CLOSED**      | Team           | PR #6 (`hsk-05-webmcp`)                     |
-| **HSK-EPIC-6**  | Protected actions and evidence receipts                       | **CLOSED**      | Team           | PR #7 (`hsk-06-protected-actions-evidence`) |
-| **HSK-EPIC-7**  | Release hardening and verification evidence                   | **CLOSED**      | Team           | PR #8 (`hsk-07-release-hardening`)          |
-| **HSK-EPIC-8**  | End-to-end production verification, browser testing & release | **CLOSED**      | Senior AI Pair | PR #10, #12, #14                            |
-| **HSK-EPIC-9**  | Kitchen-Bath Domain Integration (Requirement R1)              | **CLOSED**      | Senior AI Pair | PR #15 (`hsk-09-kitchen-bath-integration`)  |
-| **HSK-EPIC-10** | Production Frontend Polish (Requirement R2)                   | **CLOSED**      | Senior AI Pair | PR #16 (`hsk-10-frontend-polish`)           |
-| **HSK-EPIC-11** | Backend Hardening for Production Traffic (Requirement R3)     | **CLOSED**      | Senior AI Pair | PR #17 (`hsk-11-backend-hardening`)         |
-| **HSK-EPIC-12** | CI/CD Pipeline & Deployment Automation (Requirement R4)       | **CLOSED**      | Senior AI Pair | PR #18 (`hsk-12-cicd-deployment`)           |
-| **HSK-EPIC-13** | Production Readiness Documentation (Requirement R5)           | **IN PROGRESS** | Senior AI Pair | Branch `hsk-13-production-readiness-docs`   |
-| **HSK-EPIC-14** | Requirement-Driven E2E Test Suite & Adversarial Hardening     | **CLOSED**      | Senior AI Pair | Verified (90 Unit, 62 Smoke, 37 E2E)        |
+| Epic Key        | Summary                                                       | Status     | Assignee       | Pull Request / Branch                       |
+| :-------------- | :------------------------------------------------------------ | :--------- | :------------- | :------------------------------------------ |
+| **HSK-EPIC-1**  | Foundation validation, scaffold sync, toolchain corrections   | **CLOSED** | Ehab           | PR #1 (`hsk-01-foundation-validation`)      |
+| **HSK-EPIC-2**  | Freeze contracts and implement consent policy engine          | **CLOSED** | Team           | PR #3 (`hsk-02-contracts-policy`)           |
+| **HSK-EPIC-3**  | Implement Worker and Durable Object session runtime           | **CLOSED** | Team           | PR #4 (`hsk-03-worker-runtime`)             |
+| **HSK-EPIC-4**  | Shared canvas, exact proposal review, runtime hardening       | **CLOSED** | Team           | PR #5 (`hsk-04-shared-canvas`)              |
+| **HSK-EPIC-5**  | Register the governed WebMCP tool surface                     | **CLOSED** | Team           | PR #6 (`hsk-05-webmcp`)                     |
+| **HSK-EPIC-6**  | Protected actions and evidence receipts                       | **CLOSED** | Team           | PR #7 (`hsk-06-protected-actions-evidence`) |
+| **HSK-EPIC-7**  | Release hardening and verification evidence                   | **CLOSED** | Team           | PR #8 (`hsk-07-release-hardening`)          |
+| **HSK-EPIC-8**  | End-to-end production verification, browser testing & release | **CLOSED** | Senior AI Pair | PR #10, #12, #14                            |
+| **HSK-EPIC-9**  | Kitchen-Bath Domain Integration (Requirement R1)              | **CLOSED** | Senior AI Pair | PR #15 (`hsk-09-kitchen-bath-integration`)  |
+| **HSK-EPIC-10** | Production Frontend Polish (Requirement R2)                   | **CLOSED** | Senior AI Pair | PR #16 (`hsk-10-frontend-polish`)           |
+| **HSK-EPIC-11** | Backend Hardening for Production Traffic (Requirement R3)     | **CLOSED** | Senior AI Pair | PR #17 (`hsk-11-backend-hardening`)         |
+| **HSK-EPIC-12** | CI/CD Pipeline & Deployment Automation (Requirement R4)       | **CLOSED** | Senior AI Pair | PR #18 (`hsk-12-cicd-deployment`)           |
+| **HSK-EPIC-13** | Production Readiness Documentation (Requirement R5)           | **CLOSED** | Senior AI Pair | PR #19 (`hsk-13-production-readiness-docs`) |
+| **HSK-EPIC-14** | Requirement-Driven E2E Test Suite & Adversarial Hardening     | **CLOSED** | Senior AI Pair | Verified (93 Unit, 62 Smoke, 37 E2E)        |
 
 ---
 
@@ -42,7 +42,7 @@ Execute and complete the 5 core requirements (R1 through R5) plus requirement-dr
 +------------------------------------+------------------------------------+------------------------------------+
 | TO DO                              | IN PROGRESS                        | DONE                               |
 +------------------------------------+------------------------------------+------------------------------------+
-| [HSK-21] M6 Adversarial Hardening  | [HSK-19] M5 Production Docs        | [HSK-1..14] Foundation, Core DO,   |
+| [HSK-21] M6 Adversarial Hardening  |                                    | [HSK-1..14] Foundation, Core DO,   |
 |                                    |                                    |             WebMCP, Smoke & Runbook|
 |                                    |                                    |                                    |
 |                                    |                                    | [HSK-15] M1 Kitchen-Bath Domain    |
@@ -54,8 +54,10 @@ Execute and complete the 5 core requirements (R1 through R5) plus requirement-dr
 |                                    |                                    |                                    |
 |                                    |                                    | [HSK-18] M4 CI/CD Automation (Done)|
 |                                    |                                    |                                    |
+|                                    |                                    | [HSK-19] M5 Production Docs (Done) |
+|                                    |                                    |                                    |
 |                                    |                                    | [HSK-20] E2E Testing Suite Track   |
-|                                    |                                    |          (90 unit, 62 smoke, 37 e2e|
+|                                    |                                    |          (93 unit, 62 smoke, 37 e2e|
 +------------------------------------+------------------------------------+------------------------------------+
 ```
 
@@ -148,13 +150,13 @@ Execute and complete the 5 core requirements (R1 through R5) plus requirement-dr
 - **Branch**: `hsk-13-production-readiness-docs`
 - **Type**: Task / Documentation
 - **Priority**: P1 (High)
-- **Status**: `TO DO`
-- **Assignee**: Sub-Orchestrator M5
+- **Status**: `DONE`
+- **Assignee**: Senior AI Pair
 - **Tasks**:
-  - [ ] Comprehensive Gap Analysis (`docs/GAP-ANALYSIS.md`) across 6 tracks with P0-P3 priorities.
-  - [ ] Sprint Plan and Roadmap (`docs/SPRINT-PLAN.md`).
-  - [ ] REST API specification (`docs/API.md`).
-  - [ ] Update README, docs index, architecture, and runbooks.
+  - [x] Comprehensive Gap Analysis (`docs/GAP-ANALYSIS.md`) across 6 tracks with P0-P3 priorities.
+  - [x] Sprint Plan and Roadmap (`docs/GAP-ANALYSIS.md` §5).
+  - [x] REST API specification (`docs/API.md`).
+  - [x] Update README, docs index, architecture, and runbooks.
 
 ---
 
