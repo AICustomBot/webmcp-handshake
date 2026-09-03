@@ -10,7 +10,14 @@
  * (down the screen). 90 faces west, 180 faces north, 270 faces east.
  */
 
-import type { Product, RoomItem, RoomOpening, RoomState, Rotation, WallSide } from '@handshake/contracts';
+import type {
+  Product,
+  RoomItem,
+  RoomOpening,
+  RoomState,
+  Rotation,
+  WallSide,
+} from '@handshake/contracts';
 
 export interface Footprint {
   left: number;
