@@ -46,11 +46,11 @@ Migrate Handshake's frontend to a production Next.js 16+ App Router application 
 +------------------------------------+------------------------------------+------------------------------------+
 | TO DO                              | IN PROGRESS                        | DONE                               |
 +------------------------------------+------------------------------------+------------------------------------+
-| [HSK-31] Enterprise Studio UX: BOM,|                                    | [HSK-1..24] Sprints 1–5 Closed     |
-|          NKBA Checks, Consent Gates|                                    |             (Full K&B Domain, DO,  |
+| [HSK-32] Vercel Deploy Automation  |                                    | [HSK-1..24] Sprints 1–5 Closed     |
+|          & Full Stack Verification |                                    |             (Full K&B Domain, DO,  |
 |                                    |                                    |              WebMCP, Hardening)    |
-| [HSK-32] Vercel Deploy Automation  |                                    |                                    |
-|          & Full Stack Verification |                                    | [HSK-25] ADR-0005 Next.js Frontend |
+|                                    |                                    |                                    |
+|                                    |                                    | [HSK-25] ADR-0005 Next.js Frontend |
 |                                    |                                    |          on Vercel Architecture    |
 |                                    |                                    |                                    |
 |                                    |                                    | [HSK-26] Next.js 16 App Scaffold   |
@@ -67,6 +67,9 @@ Migrate Handshake's frontend to a production Next.js 16+ App Router application 
 |                                    |                                    |                                    |
 |                                    |                                    | [HSK-30] WebMCP Bridge & Vercel    |
 |                                    |                                    |          AI SDK Copilot Integration|
+|                                    |                                    |                                    |
+|                                    |                                    | [HSK-31] Enterprise Studio UX: BOM,|
+|                                    |                                    |          NKBA Checks, Consent Gates|
 +------------------------------------+------------------------------------+------------------------------------+
 ```
 
