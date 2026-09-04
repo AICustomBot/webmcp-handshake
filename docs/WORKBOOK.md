@@ -46,20 +46,20 @@ Migrate Handshake's frontend to a production Next.js 16+ App Router application 
 +------------------------------------+------------------------------------+------------------------------------+
 | TO DO                              | IN PROGRESS                        | DONE                               |
 +------------------------------------+------------------------------------+------------------------------------+
-| [HSK-28] 2D Architectural Floorplan|                                    | [HSK-1..24] Sprints 1–5 Closed     |
-|          & Fixture Drag-and-Drop   |                                    |             (Full K&B Domain, DO,  |
+| [HSK-29] React Three Fiber 3D      |                                    | [HSK-1..24] Sprints 1–5 Closed     |
+|          Parametric Studio Canvas  |                                    |             (Full K&B Domain, DO,  |
 |                                    |                                    |              WebMCP, Hardening)    |
-| [HSK-29] React Three Fiber 3D      |                                    | [HSK-25] ADR-0005 Next.js Frontend |
-|          Parametric Studio Canvas  |                                    |          on Vercel Architecture    |
+| [HSK-30] WebMCP Bridge & Vercel    |                                    | [HSK-25] ADR-0005 Next.js Frontend |
+|          AI SDK Copilot Integration|                                    |          on Vercel Architecture    |
 |                                    |                                    |                                    |
-| [HSK-30] WebMCP Bridge & Vercel    |                                    | [HSK-26] Next.js 16 App Scaffold   |
-|          AI SDK Copilot Integration|                                    |          & Monorepo Integration    |
+| [HSK-31] Enterprise Studio UX: BOM,|                                    | [HSK-26] Next.js 16 App Scaffold   |
+|          NKBA Checks, Consent Gates|                                    |          & Monorepo Integration    |
 |                                    |                                    |                                    |
-| [HSK-31] Enterprise Studio UX: BOM,|                                    | [HSK-27] API Client, Proxy Rewrites|
-|          NKBA Checks, Consent Gates|                                    |          & DO Session State Sync   |
+| [HSK-32] Vercel Deploy Automation  |                                    | [HSK-27] API Client, Proxy Rewrites|
+|          & Full Stack Verification |                                    |          & DO Session State Sync   |
 |                                    |                                    |                                    |
-| [HSK-32] Vercel Deploy Automation  |                                    |                                    |
-|          & Full Stack Verification |                                    |                                    |
+|                                    |                                    | [HSK-28] 2D Architectural Floorplan|
+|                                    |                                    |          & Fixture Drag-and-Drop   |
 +------------------------------------+------------------------------------+------------------------------------+
 ```
 
@@ -311,15 +311,15 @@ Migrate Handshake's frontend to a production Next.js 16+ App Router application 
 - **Branch**: `hsk-22-2d-architectural-canvas`
 - **Type**: Story / 2D Studio Component
 - **Priority**: P1 (High)
-- **Status**: `PLANNED`
+- **Status**: `DONE`
 - **Assignee**: Senior Frontend Engineer
 - **Tasks**:
-  - [ ] Build React 2D floorplan canvas component (`components/studio/canvas-2d.tsx`).
-  - [ ] Render wall framing layers with thickness, interior dimensions, and grid units (12-inch snap).
-  - [ ] Render door swings, window openings, and wall cutouts (`openings-layer`).
-  - [ ] Render utility service anchors (water, drain, gas, 120V/240V electric, vent).
-  - [ ] Implement pointer drag-and-drop fixture movement with boundary clamping and coordinate snapping.
-  - [ ] Render amber dashed proposal shapes with non-mutating preview guarantees.
+  - [x] Build React 2D floorplan canvas component (`components/studio/canvas-2d.tsx`).
+  - [x] Render wall framing layers with thickness, interior dimensions, and grid units (12-inch snap).
+  - [x] Render door swings, window openings, and wall cutouts (`openings-layer`).
+  - [x] Render utility service anchors (water, drain, gas, 120V/240V electric, vent).
+  - [x] Implement pointer drag-and-drop fixture movement with boundary clamping and coordinate snapping.
+  - [x] Render amber dashed proposal shapes with non-mutating preview guarantees.
 
 ---
 
