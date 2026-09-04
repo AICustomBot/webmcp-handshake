@@ -50,6 +50,8 @@ export function persistCredentials(sessionId: string | null, capability: string 
   }
 }
 
+export type WebGLStatus = 'checking' | 'ready' | 'unsupported' | 'context_lost';
+
 export interface StudioState {
   sessionId: string | null;
   capability: string | null;
@@ -59,6 +61,8 @@ export interface StudioState {
   activeProposal: Proposal | null;
   viewportMode: '2d' | '3d';
   cameraMode: 'orbit' | 'first-person' | 'orthographic';
+  webglStatus: WebGLStatus;
+  webglError: string | null;
   selectedItemId: string | null;
   hoveredItemId: string | null;
   zoom: number;
@@ -94,6 +98,7 @@ export interface StudioActions {
   resetSession: () => void;
   setViewportMode: (mode: '2d' | '3d') => void;
   setCameraMode: (mode: 'orbit' | 'first-person' | 'orthographic') => void;
+  setWebGLStatus: (status: WebGLStatus, error?: string) => void;
   selectItem: (itemId: string | null) => void;
   setHoveredItem: (itemId: string | null) => void;
   setZoom: (zoom: number) => void;
@@ -115,6 +120,8 @@ export const createStudioStore = (client: HandshakeApiClient = defaultApiClient)
     activeProposal: null,
     viewportMode: '2d',
     cameraMode: 'orbit',
+    webglStatus: 'ready',
+    webglError: null,
     selectedItemId: null,
     hoveredItemId: null,
     zoom: 1,
@@ -393,6 +400,8 @@ export const createStudioStore = (client: HandshakeApiClient = defaultApiClient)
         activeProposal: null,
         viewportMode: '2d',
         cameraMode: 'orbit',
+        webglStatus: 'ready',
+        webglError: null,
         selectedItemId: null,
         hoveredItemId: null,
         zoom: 1,
@@ -406,6 +415,16 @@ export const createStudioStore = (client: HandshakeApiClient = defaultApiClient)
 
     setViewportMode: (viewportMode: '2d' | '3d') => set({ viewportMode }),
     setCameraMode: (cameraMode: 'orbit' | 'first-person' | 'orthographic') => set({ cameraMode }),
+    setWebGLStatus: (webglStatus: WebGLStatus, webglError?: string) => {
+      const updates: Partial<StudioState> = {
+        webglStatus,
+        webglError: webglError ?? null,
+      };
+      if (webglStatus === 'unsupported' || webglStatus === 'context_lost') {
+        updates.viewportMode = '2d';
+      }
+      set(updates);
+    },
     selectItem: (selectedItemId: string | null) => set({ selectedItemId }),
     setHoveredItem: (hoveredItemId: string | null) => set({ hoveredItemId }),
     setZoom: (zoom: number) => set({ zoom }),
