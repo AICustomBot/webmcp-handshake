@@ -4,7 +4,6 @@ import { useEffect } from 'react';
 import Image from 'next/image';
 import {
   ShieldCheck,
-  Layers,
   Compass,
   Box,
   Sparkles,
@@ -17,15 +16,28 @@ import {
   Hash,
   DollarSign,
   Tag,
+  Grid,
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
+  Layers,
+  Move,
+  RotateCw,
 } from 'lucide-react';
 import { CONTRACT_VERSION } from '@handshake/contracts';
 import { useStudioStore } from '@/lib/store/studio-store';
+import { Canvas2D, formatDimension, resolveCatalogProduct } from '@/components/studio/canvas-2d';
 
 export default function StudioPage() {
   const {
     sessionId,
     roomState,
     evaluation,
+    catalog,
+    viewportMode,
+    zoom,
+    gridSnap,
+    selectedItemId,
     isLoading,
     isSyncing,
     error,
@@ -33,6 +45,12 @@ export default function StudioPage() {
     resetSession,
     refreshState,
     hydrate,
+    setViewportMode,
+    setZoom,
+    setPan,
+    setGridSnap,
+    selectItem,
+    moveItem,
   } = useStudioStore();
 
   useEffect(() => {
@@ -47,6 +65,17 @@ export default function StudioPage() {
     evaluation?.remainingCents !== undefined
       ? `$${(evaluation.remainingCents / 100).toLocaleString()}`
       : budgetFormatted;
+
+  const selectedItem = roomState?.items.find((i) => i.id === selectedItemId);
+  const selectedProduct = selectedItem
+    ? resolveCatalogProduct(selectedItem.productId, catalog)
+    : null;
+
+  const handleRotateSelected = () => {
+    if (!selectedItem) return;
+    const nextRotation = ((selectedItem.rotation + 90) % 360) as 0 | 90 | 180 | 270;
+    moveItem(selectedItem.id, selectedItem.x, selectedItem.y, nextRotation);
+  };
 
   return (
     <main className="flex min-h-screen flex-col bg-[#0b0f19] text-slate-100">
@@ -191,74 +220,201 @@ export default function StudioPage() {
       )}
 
       {/* Main Studio Viewport Container */}
-      <div className="flex flex-1 flex-col p-6">
-        <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6">
-          {/* Hero Banner */}
-          <section className="relative overflow-hidden rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900/90 to-blue-950/40 p-8 shadow-2xl">
-            <div className="relative z-10 max-w-3xl space-y-4">
-              <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-xs font-medium text-blue-400">
-                <Sparkles className="h-3.5 w-3.5" />
-                <span>Next.js 16 App Router &bull; React 19 &bull; WebMCP Governance</span>
-              </div>
-              <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                Kitchen &amp; Bath Co-Design Studio
-              </h1>
-              <p className="text-base text-slate-400 sm:text-lg">
-                Deterministic spatial planning with WebMCP consensus governance, dual 2D
-                architectural floorplans, React Three Fiber 3D spatial visualization, and
-                tamper-evident receipts.
-              </p>
-            </div>
-          </section>
-
-          {/* Dual Viewports Preview Grid */}
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            {/* 2D Architectural Viewport Card */}
-            <div className="flex flex-col rounded-xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg">
-              <div className="mb-4 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Compass className="h-5 w-5 text-blue-400" />
-                  <h2 className="text-lg font-semibold text-white">2D Architectural Plan</h2>
-                </div>
-                <span className="rounded bg-slate-800 px-2 py-0.5 text-xs text-slate-300">
-                  12&quot; Grid Snap
-                </span>
-              </div>
-              <div className="relative flex aspect-video flex-1 items-center justify-center rounded-lg border border-dashed border-slate-700/60 bg-slate-950/50 p-6 text-center">
-                <div className="space-y-2">
-                  <Layers className="mx-auto h-8 w-8 text-slate-500" />
-                  <p className="text-sm font-medium text-slate-300">Architectural Layout Engine</p>
-                  <p className="text-xs text-slate-500">
-                    Wall boundaries, openings, utility anchors, and drag-and-drop fixture snapping
-                  </p>
-                </div>
-              </div>
+      <div className="flex flex-1 flex-col p-4 sm:p-6">
+        <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-5">
+          {/* Viewport Mode & Quick Controls Header */}
+          <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-800 bg-slate-900/70 p-3 backdrop-blur-md">
+            {/* Viewport Mode Switcher */}
+            <div className="flex items-center rounded-lg border border-slate-700 bg-slate-800/80 p-1">
+              <button
+                type="button"
+                onClick={() => setViewportMode('2d')}
+                className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                  viewportMode === '2d'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Compass className="h-3.5 w-3.5" />
+                <span>2D Architectural</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewportMode('3d')}
+                className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                  viewportMode === '3d'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Box className="h-3.5 w-3.5" />
+                <span>3D Spatial (R3F)</span>
+              </button>
             </div>
 
-            {/* 3D Spatial Visualizer Card */}
-            <div className="flex flex-col rounded-xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg">
-              <div className="mb-4 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Box className="h-5 w-5 text-emerald-400" />
-                  <h2 className="text-lg font-semibold text-white">3D Spatial Studio</h2>
-                </div>
-                <span className="rounded bg-slate-800 px-2 py-0.5 text-xs text-slate-300">
-                  R3F &bull; React 19
-                </span>
+            {/* Global Studio Canvas Controls */}
+            <div className="flex flex-wrap items-center gap-2">
+              {/* 12" Grid Snap Toggle */}
+              <button
+                type="button"
+                onClick={() => setGridSnap(!gridSnap)}
+                className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                  gridSnap
+                    ? 'border-blue-500/40 bg-blue-500/15 text-blue-300'
+                    : 'border-slate-700 bg-slate-800/60 text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Grid className="h-3.5 w-3.5" />
+                <span>12&quot; Grid Snap</span>
+              </button>
+
+              {/* Zoom Controls */}
+              <div className="flex items-center rounded-lg border border-slate-700 bg-slate-800/60 p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setZoom(Math.max(0.4, Number((zoom - 0.15).toFixed(2))))}
+                  className="rounded p-1.5 text-slate-300 hover:bg-slate-700"
+                  title="Zoom Out"
+                >
+                  <ZoomOut className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setZoom(1.0);
+                    setPan({ x: 0, y: 0 });
+                  }}
+                  className="px-2 py-1 font-mono text-xs text-slate-300 hover:bg-slate-700"
+                  title="Reset Zoom & Pan (Fit to View)"
+                >
+                  {Math.round(zoom * 100)}%
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setZoom(Math.min(3.0, Number((zoom + 0.15).toFixed(2))))}
+                  className="rounded p-1.5 text-slate-300 hover:bg-slate-700"
+                  title="Zoom In"
+                >
+                  <ZoomIn className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setZoom(1.0);
+                    setPan({ x: 0, y: 0 });
+                  }}
+                  className="rounded p-1.5 text-slate-300 hover:bg-slate-700 border-l border-slate-700 ml-0.5"
+                  title="Fit View"
+                >
+                  <Maximize2 className="h-3.5 w-3.5" />
+                </button>
               </div>
-              <div className="relative flex aspect-video flex-1 items-center justify-center rounded-lg border border-dashed border-slate-700/60 bg-slate-950/50 p-6 text-center">
-                <div className="space-y-2">
-                  <Cpu className="mx-auto h-8 w-8 text-slate-500" />
-                  <p className="text-sm font-medium text-slate-300">React Three Fiber Visualizer</p>
-                  <p className="text-xs text-slate-500">
-                    PBR materials, parametric 3D models, OrbitControls, and First-Person Walkthrough
-                  </p>
+
+              {/* Selected Item Rotate / Info */}
+              {selectedItem && selectedProduct && (
+                <div className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-950/40 px-3 py-1 text-xs text-blue-300">
+                  <span className="font-semibold">{selectedProduct.name}</span>
+                  <span className="text-slate-500">&bull;</span>
+                  <span className="font-mono">
+                    ({selectedItem.x}&quot;, {selectedItem.y}&quot;)
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleRotateSelected}
+                    className="ml-1 inline-flex items-center gap-1 rounded bg-blue-600/30 px-1.5 py-0.5 text-[11px] text-blue-200 hover:bg-blue-600/50"
+                    title="Rotate 90 degrees clockwise"
+                  >
+                    <RotateCw className="h-3 w-3" />
+                    <span>{selectedItem.rotation}&deg;</span>
+                  </button>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
-          {/* Governance & Architectural Features */}
+          {/* Primary Viewport Area */}
+          <div className="relative flex flex-1 flex-col overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/50 shadow-2xl min-h-[560px] md:min-h-[640px]">
+            {viewportMode === '2d' ? (
+              <Canvas2D />
+            ) : (
+              <div className="relative flex flex-1 flex-col items-center justify-center p-8 text-center">
+                <div className="max-w-md space-y-4">
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-indigo-500/30 bg-indigo-500/10 text-indigo-400">
+                    <Box className="h-8 w-8" />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-bold text-white">React Three Fiber 3D Studio</h3>
+                    <p className="text-sm text-slate-400">
+                      High-fidelity procedural parametric 3D visualizer with PBR materials, contact
+                      shadows, OrbitControls, and First-Person walkthrough.
+                    </p>
+                    <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3 py-1 text-xs text-indigo-300">
+                      <span>Sprint 6 &bull; Milestone HSK-29</span>
+                    </div>
+                  </div>
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setViewportMode('2d')}
+                      className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-500"
+                    >
+                      <Compass className="h-4 w-4" />
+                      <span>Return to 2D Architectural Floorplan</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Placed Fixtures & Details Drawer */}
+          {roomState && roomState.items.length > 0 && (
+            <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Layers className="h-4 w-4 text-blue-400" />
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+                    Placed Architectural Fixtures ({roomState.items.length})
+                  </h3>
+                </div>
+                <span className="text-xs text-slate-500">
+                  Click a fixture or drag to reposition
+                </span>
+              </div>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-4">
+                {roomState.items.map((item) => {
+                  const prod = resolveCatalogProduct(item.productId, catalog);
+                  const isSelected = selectedItemId === item.id;
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={() => selectItem(isSelected ? null : item.id)}
+                      className={`cursor-pointer rounded-lg border p-2.5 transition-colors ${
+                        isSelected
+                          ? 'border-blue-500 bg-blue-950/30 text-white'
+                          : 'border-slate-800 bg-slate-900/40 text-slate-300 hover:border-slate-700 hover:bg-slate-800/50'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-xs truncate">{prod.name}</span>
+                        <span className="font-mono text-[11px] text-slate-500">
+                          {formatDimension(prod.widthIn)} &times; {formatDimension(prod.depthIn)}
+                        </span>
+                      </div>
+                      <div className="mt-1.5 flex items-center justify-between text-[11px] text-slate-400 font-mono">
+                        <span>
+                          Pos: ({item.x}&quot;, {item.y}&quot;)
+                        </span>
+                        <span>Rot: {item.rotation}&deg;</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Constitutional Governance & Rule Checking Footers */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="flex items-start gap-3 rounded-lg border border-slate-800/80 bg-slate-900/40 p-4">
               <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-blue-400" />
