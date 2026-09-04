@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import {
   ShieldCheck,
@@ -27,6 +27,8 @@ import {
   Eye,
   Footprints,
   Camera,
+  FileCheck,
+  Receipt,
 } from 'lucide-react';
 import { CONTRACT_VERSION } from '@handshake/contracts';
 import { useStudioStore } from '@/lib/store/studio-store';
@@ -36,8 +38,16 @@ import { Canvas3DWrapper } from '@/components/studio/canvas-3d-wrapper';
 import { WebGLFallbackBanner } from '@/components/studio/webgl-fallback-banner';
 import { WebMCPFallbackBanner } from '@/components/studio/webmcp-fallback-banner';
 import { CopilotDrawer } from '@/components/studio/copilot-drawer';
+import { BomPanel } from '@/components/studio/bom-panel';
+import { NkbaFindingsOverlay } from '@/components/studio/nkba-findings-overlay';
+import { ProposalReviewModal } from '@/components/studio/proposal-review-modal';
+import { ConfirmationDialog } from '@/components/studio/confirmation-dialog';
+import { ReceiptModal } from '@/components/studio/receipt-modal';
+import { captureCanvasSnapshot } from '@/lib/studio-export';
 
 export default function StudioPage() {
+  const [snapshotMessage, setSnapshotMessage] = useState<string | null>(null);
+  const [activeStudioTab, setActiveStudioTab] = useState<'bom' | 'nkba' | 'fixtures'>('bom');
   const {
     sessionId,
     roomState,
@@ -53,6 +63,8 @@ export default function StudioPage() {
     error,
     isCopilotOpen,
     setCopilotOpen,
+    isReceiptOpen,
+    setReceiptOpen,
     initSession,
     resetSession,
     refreshState,
@@ -90,6 +102,20 @@ export default function StudioPage() {
     if (!selectedItem) return;
     const nextRotation = ((selectedItem.rotation + 90) % 360) as 0 | 90 | 180 | 270;
     moveItem(selectedItem.id, selectedItem.x, selectedItem.y, nextRotation);
+  };
+
+  const handleTakeSnapshot = async () => {
+    const dataUrl = await captureCanvasSnapshot({
+      viewportMode,
+      sessionId,
+      version,
+    });
+    if (dataUrl) {
+      setSnapshotMessage(`Saved snapshot: handshake-${viewportMode}-snapshot-v${version}.png`);
+      setTimeout(() => setSnapshotMessage(null), 4000);
+    } else {
+      useStudioStore.setState({ error: 'Failed to capture snapshot' });
+    }
   };
 
   return (
@@ -183,6 +209,24 @@ export default function StudioPage() {
                 </button>
                 <button
                   type="button"
+                  onClick={handleTakeSnapshot}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800/60 px-2.5 py-1.5 text-xs font-medium text-slate-200 transition-colors hover:bg-slate-700"
+                  title="Capture high-resolution PNG snapshot of current viewport"
+                >
+                  <Camera className="h-3.5 w-3.5 text-blue-400" />
+                  <span className="hidden sm:inline">Snapshot</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setReceiptOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800/60 px-2.5 py-1.5 text-xs font-medium text-slate-200 transition-colors hover:bg-slate-700"
+                  title="View and download tamper-evident signed audit receipt"
+                >
+                  <FileCheck className="h-3.5 w-3.5 text-emerald-400" />
+                  <span className="hidden sm:inline">Receipt</span>
+                </button>
+                <button
+                  type="button"
                   onClick={() => resetSession()}
                   className="inline-flex items-center gap-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-2.5 py-1.5 text-xs font-medium text-rose-300 transition-colors hover:bg-rose-500/20"
                   title="Reset and clear session storage"
@@ -243,6 +287,23 @@ export default function StudioPage() {
           <button
             type="button"
             onClick={() => useStudioStore.setState({ error: null })}
+            className="text-slate-400 hover:text-white"
+          >
+            &times;
+          </button>
+        </div>
+      )}
+
+      {/* Snapshot Download Toast */}
+      {snapshotMessage && (
+        <div className="flex items-center justify-between border-b border-emerald-500/30 bg-emerald-950/40 px-6 py-2.5 text-xs text-emerald-300">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+            <span>{snapshotMessage}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSnapshotMessage(null)}
             className="text-slate-400 hover:text-white"
           >
             &times;
@@ -419,52 +480,131 @@ export default function StudioPage() {
             {viewportMode === '2d' ? <Canvas2D /> : <Canvas3DWrapper />}
           </div>
 
-          {/* Placed Fixtures & Details Drawer */}
-          {roomState && roomState.items.length > 0 && (
-            <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-              <div className="mb-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Layers className="h-4 w-4 text-blue-400" />
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-300">
-                    Placed Architectural Fixtures ({roomState.items.length})
-                  </h3>
-                </div>
-                <span className="text-xs text-slate-500">
-                  Click a fixture or drag to reposition
-                </span>
-              </div>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-4">
-                {roomState.items.map((item) => {
-                  const prod = resolveCatalogProduct(item.productId, catalog);
-                  const isSelected = selectedItemId === item.id;
-                  return (
-                    <div
-                      key={item.id}
-                      onClick={() => selectItem(isSelected ? null : item.id)}
-                      className={`cursor-pointer rounded-lg border p-2.5 transition-colors ${
-                        isSelected
-                          ? 'border-blue-500 bg-blue-950/30 text-white'
-                          : 'border-slate-800 bg-slate-900/40 text-slate-300 hover:border-slate-700 hover:bg-slate-800/50'
+          {/* Tabbed Studio Inspector: BOM, NKBA Guidelines & Placed Fixtures */}
+          <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+            <div className="mb-4 flex flex-wrap items-center justify-between border-b border-slate-800 pb-3 gap-2">
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setActiveStudioTab('bom')}
+                  className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                    activeStudioTab === 'bom'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                  }`}
+                >
+                  <Receipt className="h-4 w-4" />
+                  <span>Bill of Materials</span>
+                  {roomState && (
+                    <span
+                      className={`rounded-full px-1.5 py-0.5 text-[10px] font-mono ${
+                        activeStudioTab === 'bom'
+                          ? 'bg-blue-700 text-blue-100'
+                          : 'bg-slate-800 text-slate-400'
                       }`}
                     >
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-xs truncate">{prod.name}</span>
-                        <span className="font-mono text-[11px] text-slate-500">
-                          {formatDimension(prod.widthIn)} &times; {formatDimension(prod.depthIn)}
-                        </span>
-                      </div>
-                      <div className="mt-1.5 flex items-center justify-between text-[11px] text-slate-400 font-mono">
-                        <span>
-                          Pos: ({item.x}&quot;, {item.y}&quot;)
-                        </span>
-                        <span>Rot: {item.rotation}&deg;</span>
-                      </div>
-                    </div>
-                  );
-                })}
+                      {roomState.items.length}
+                    </span>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveStudioTab('nkba')}
+                  className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                    activeStudioTab === 'nkba'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                  }`}
+                >
+                  <ShieldCheck className="h-4 w-4" />
+                  <span>NKBA Rules</span>
+                  {evaluation && evaluation.findings.length > 0 && (
+                    <span
+                      className={`rounded-full px-1.5 py-0.5 text-[10px] font-mono ${
+                        evaluation.findings.some((f) => f.severity === 'blocked')
+                          ? 'bg-rose-500/30 text-rose-300'
+                          : 'bg-amber-500/30 text-amber-300'
+                      }`}
+                    >
+                      {evaluation.findings.length}
+                    </span>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveStudioTab('fixtures')}
+                  className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                    activeStudioTab === 'fixtures'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                  }`}
+                >
+                  <Layers className="h-4 w-4" />
+                  <span>Placed Fixtures</span>
+                  {roomState && (
+                    <span
+                      className={`rounded-full px-1.5 py-0.5 text-[10px] font-mono ${
+                        activeStudioTab === 'fixtures'
+                          ? 'bg-blue-700 text-blue-100'
+                          : 'bg-slate-800 text-slate-400'
+                      }`}
+                    >
+                      {roomState.items.length}
+                    </span>
+                  )}
+                </button>
               </div>
+
+              <span className="text-xs text-slate-500">
+                {activeStudioTab === 'bom' && 'Deterministic budget and itemized procurement BOM'}
+                {activeStudioTab === 'nkba' && 'Automated architectural layout rule compliance'}
+                {activeStudioTab === 'fixtures' && 'Click a fixture or drag to reposition'}
+              </span>
             </div>
-          )}
+
+            {/* Tab Contents */}
+            {activeStudioTab === 'bom' && <BomPanel />}
+            {activeStudioTab === 'nkba' && <NkbaFindingsOverlay />}
+            {activeStudioTab === 'fixtures' &&
+              (roomState && roomState.items.length > 0 ? (
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-4">
+                  {roomState.items.map((item) => {
+                    const prod = resolveCatalogProduct(item.productId, catalog);
+                    const isSelected = selectedItemId === item.id;
+                    return (
+                      <div
+                        key={item.id}
+                        onClick={() => selectItem(isSelected ? null : item.id)}
+                        className={`cursor-pointer rounded-lg border p-2.5 transition-colors ${
+                          isSelected
+                            ? 'border-blue-500 bg-blue-950/30 text-white'
+                            : 'border-slate-800 bg-slate-900/40 text-slate-300 hover:border-slate-700 hover:bg-slate-800/50'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium text-xs truncate">{prod.name}</span>
+                          <span className="font-mono text-[11px] text-slate-500">
+                            {formatDimension(prod.widthIn)} &times; {formatDimension(prod.depthIn)}
+                          </span>
+                        </div>
+                        <div className="mt-1.5 flex items-center justify-between text-[11px] text-slate-400 font-mono">
+                          <span>
+                            Pos: ({item.x}&quot;, {item.y}&quot;)
+                          </span>
+                          <span>Rot: {item.rotation}&deg;</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="py-8 text-center text-xs text-slate-500">
+                  No fixtures placed in room yet. Click catalog items on the left to add them.
+                </div>
+              ))}
+          </div>
 
           {/* Constitutional Governance & Rule Checking Footers */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -504,6 +644,15 @@ export default function StudioPage() {
 
       {/* Slide-Over AI Copilot Drawer */}
       <CopilotDrawer />
+
+      {/* Proposal Review Modal (Amber Overlay -> Human Approval Gate) */}
+      <ProposalReviewModal />
+
+      {/* Confirmation Dialog for Protected Actions (Single-Use Proof Token Gate) */}
+      <ConfirmationDialog />
+
+      {/* Signed Cryptographic Receipt Modal */}
+      <ReceiptModal isOpen={isReceiptOpen} onClose={() => setReceiptOpen(false)} />
     </main>
   );
 }

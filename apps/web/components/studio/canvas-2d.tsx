@@ -403,6 +403,8 @@ export const Canvas2D: React.FC = () => {
       {/* SVG Canvas Area */}
       <div className="relative flex-1 cursor-grab active:cursor-grabbing overflow-hidden">
         <svg
+          id="handshake-canvas-2d"
+          data-testid="handshake-canvas-2d"
           ref={svgRef}
           viewBox={viewBox}
           className="h-full w-full touch-none"

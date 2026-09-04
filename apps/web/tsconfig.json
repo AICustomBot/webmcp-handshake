@@ -19,7 +19,9 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@handshake/contracts": ["../../packages/contracts/src/index.ts"],
+      "@handshake/policy": ["../../packages/policy/src/index.ts"]
     }
   },
   "include": [

@@ -64,6 +64,7 @@ export interface StudioState {
   webglStatus: WebGLStatus;
   webglError: string | null;
   isCopilotOpen: boolean;
+  isReceiptOpen: boolean;
   confirmationRequest: {
     key: string;
     action: ProtectedAction;
@@ -92,6 +93,7 @@ export interface StudioActions {
   apply: (proposalId: string, proposalHash: string, expectedVersion: number) => Promise<void>;
   setActiveProposal: (proposal: Proposal | null) => void;
   setCopilotOpen: (open: boolean) => void;
+  setReceiptOpen: (open: boolean) => void;
   setConfirmationRequest: (
     req: {
       key: string;
@@ -138,6 +140,7 @@ export const createStudioStore = (client: HandshakeApiClient = defaultApiClient)
     webglStatus: 'ready',
     webglError: null,
     isCopilotOpen: false,
+    isReceiptOpen: false,
     confirmationRequest: null,
     selectedItemId: null,
     hoveredItemId: null,
@@ -420,6 +423,7 @@ export const createStudioStore = (client: HandshakeApiClient = defaultApiClient)
         webglStatus: 'ready',
         webglError: null,
         isCopilotOpen: false,
+        isReceiptOpen: false,
         confirmationRequest: null,
         selectedItemId: null,
         hoveredItemId: null,
@@ -434,6 +438,7 @@ export const createStudioStore = (client: HandshakeApiClient = defaultApiClient)
 
     setActiveProposal: (activeProposal: Proposal | null) => set({ activeProposal }),
     setCopilotOpen: (isCopilotOpen: boolean) => set({ isCopilotOpen }),
+    setReceiptOpen: (isReceiptOpen: boolean) => set({ isReceiptOpen }),
     setConfirmationRequest: (
       confirmationRequest: {
         key: string;
