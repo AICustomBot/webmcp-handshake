@@ -46,9 +46,9 @@ Migrate Handshake's frontend to a production Next.js 16+ App Router application 
 +------------------------------------+------------------------------------+------------------------------------+
 | TO DO                              | IN PROGRESS                        | DONE                               |
 +------------------------------------+------------------------------------+------------------------------------+
-| [HSK-31] Enterprise Studio UX: BOM,| [HSK-30] WebMCP Bridge & Vercel    | [HSK-1..24] Sprints 1–5 Closed     |
-|          NKBA Checks, Consent Gates|          AI SDK Copilot Integration|             (Full K&B Domain, DO,  |
-|                                    |          (Issue #16, hsk-24)       |              WebMCP, Hardening)    |
+| [HSK-31] Enterprise Studio UX: BOM,|                                    | [HSK-1..24] Sprints 1–5 Closed     |
+|          NKBA Checks, Consent Gates|                                    |             (Full K&B Domain, DO,  |
+|                                    |                                    |              WebMCP, Hardening)    |
 | [HSK-32] Vercel Deploy Automation  |                                    |                                    |
 |          & Full Stack Verification |                                    | [HSK-25] ADR-0005 Next.js Frontend |
 |                                    |                                    |          on Vercel Architecture    |
@@ -64,6 +64,9 @@ Migrate Handshake's frontend to a production Next.js 16+ App Router application 
 |                                    |                                    |                                    |
 |                                    |                                    | [HSK-29] React Three Fiber 3D      |
 |                                    |                                    |          Parametric Studio Canvas  |
+|                                    |                                    |                                    |
+|                                    |                                    | [HSK-30] WebMCP Bridge & Vercel    |
+|                                    |                                    |          AI SDK Copilot Integration|
 +------------------------------------+------------------------------------+------------------------------------+
 ```
 
