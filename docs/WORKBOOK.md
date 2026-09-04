@@ -370,19 +370,19 @@ Migrate Handshake's frontend to a production Next.js 16+ App Router application 
 
 ### [HSK-31] Enterprise Studio UX: BOM, NKBA Checks & Consent Gates
 
-- **Issue**: #31
+- **Issue**: #17
 - **Branch**: `hsk-25-enterprise-studio-ux`
 - **Type**: Story / UX & Design
 - **Priority**: P1 (High)
-- **Status**: `PLANNED`
+- **Status**: `DONE`
 - **Assignee**: Senior UX Engineer
 - **Tasks**:
-  - [ ] Bill of Materials (BOM) interactive summary panel with unit costs, item counts, SKUs, and remaining budget tracker.
-  - [ ] Real-time NKBA layout findings overlay (blocked errors, warnings, info badges) with citations.
-  - [ ] Proposal review card with exact operation diffs, SHA-256 hash preview, and human Approve/Reject controls.
-  - [ ] Protected action confirmation modal (`<dialog>`) generating single-use proof tokens.
-  - [ ] Tamper-evident decision receipt export (JSON download and print-ready summary view).
-  - [ ] High-resolution 3D canvas snapshot capture (`.toDataURL('image/png')`) for client design presentations.
+  - [x] Bill of Materials (BOM) interactive summary panel with unit costs, item counts, SKUs, and remaining budget tracker.
+  - [x] Real-time NKBA layout findings overlay (blocked errors, warnings, info badges) with citations.
+  - [x] Proposal review card with exact operation diffs, SHA-256 hash preview, and human Approve/Reject controls.
+  - [x] Protected action confirmation modal (`<dialog>`) generating single-use proof tokens.
+  - [x] Tamper-evident decision receipt export (JSON download and print-ready summary view).
+  - [x] High-resolution 3D canvas snapshot capture (`.toDataURL('image/png')`) for client design presentations.
 
 ---
 
