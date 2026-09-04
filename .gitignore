@@ -5,6 +5,7 @@ coverage/
 .env
 .dev.vars
 *.log
+*.tsbuildinfo
 .DS_Store
 *.swp
 .agents/
@@ -12,3 +13,5 @@ coverage/
 ORIGINAL_REQUEST.md
 PROJECT.md
 artifacts/
+.next/
+apps/web/.next/

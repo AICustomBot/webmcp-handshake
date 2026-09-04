@@ -46,17 +46,14 @@ Migrate Handshake's frontend to a production Next.js 16+ App Router application 
 +------------------------------------+------------------------------------+------------------------------------+
 | TO DO                              | IN PROGRESS                        | DONE                               |
 +------------------------------------+------------------------------------+------------------------------------+
-| [HSK-26] Next.js 16 App Scaffold   |                                    | [HSK-1..24] Sprints 1–5 Closed     |
-|          & Monorepo Integration    |                                    |             (Full K&B Domain, DO,  |
+| [HSK-27] API Client, Proxy Rewrites|                                    | [HSK-1..24] Sprints 1–5 Closed     |
+|          & DO Session State Sync   |                                    |             (Full K&B Domain, DO,  |
 |                                    |                                    |              WebMCP, Hardening)    |
-| [HSK-27] API Client, Proxy Rewrites|                                    |                                    |
-|          & DO Session State Sync   |                                    | [HSK-25] ADR-0005 Next.js Frontend |
-|                                    |                                    |          on Vercel Architecture    |
-| [HSK-28] 2D Architectural Floorplan|                                    |                                    |
-|          & Fixture Drag-and-Drop   |                                    |                                    |
+| [HSK-28] 2D Architectural Floorplan|                                    | [HSK-25] ADR-0005 Next.js Frontend |
+|          & Fixture Drag-and-Drop   |                                    |          on Vercel Architecture    |
 |                                    |                                    |                                    |
-| [HSK-29] React Three Fiber 3D      |                                    |                                    |
-|          Parametric Studio Canvas  |                                    |                                    |
+| [HSK-29] React Three Fiber 3D      |                                    | [HSK-26] Next.js 16 App Scaffold   |
+|          Parametric Studio Canvas  |                                    |          & Monorepo Integration    |
 |                                    |                                    |                                    |
 | [HSK-30] WebMCP Bridge & Vercel    |                                    |                                    |
 |          AI SDK Copilot Integration|                                    |                                    |
@@ -282,15 +279,15 @@ Migrate Handshake's frontend to a production Next.js 16+ App Router application 
 - **Branch**: `hsk-20-nextjs-scaffold`
 - **Type**: Story / Frontend Infrastructure
 - **Priority**: P0 (Highest)
-- **Status**: `PLANNED`
+- **Status**: `CLOSED`
 - **Assignee**: Senior Frontend Engineer
 - **Tasks**:
-  - [ ] Initialize Next.js 16 App Router application in `apps/web` with React 19 and TypeScript.
-  - [ ] Configure Tailwind CSS, postcss, and Geist font family.
-  - [ ] Link monorepo dependencies (`@handshake/contracts`, `@handshake/policy`) via `workspace:*`.
-  - [ ] Configure `next.config.ts` with Vercel rewrites proxying `/api/v1/:path*` to Cloudflare Worker.
-  - [ ] Migrate static brand assets (`logo.svg`, favicons, brand illustrations) to `apps/web/public/`.
-  - [ ] Verify root package scripts (`pnpm dev`, `pnpm build`, `pnpm check`).
+  - [x] Initialize Next.js 16 App Router application in `apps/web` with React 19 and TypeScript.
+  - [x] Configure Tailwind CSS, postcss, and Geist font family.
+  - [x] Link monorepo dependencies (`@handshake/contracts`, `@handshake/policy`) via `workspace:*`.
+  - [x] Configure `next.config.ts` with Vercel rewrites proxying `/api/v1/:path*` to Cloudflare Worker.
+  - [x] Migrate static brand assets (`logo.svg`, favicons, brand illustrations) to `apps/web/public/`.
+  - [x] Verify root package scripts (`pnpm dev`, `pnpm build`, `pnpm check`).
 
 ---
 
