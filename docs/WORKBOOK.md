@@ -46,20 +46,23 @@ Migrate Handshake's frontend to a production Next.js 16+ App Router application 
 +------------------------------------+------------------------------------+------------------------------------+
 | TO DO                              | IN PROGRESS                        | DONE                               |
 +------------------------------------+------------------------------------+------------------------------------+
-| [HSK-29] React Three Fiber 3D      |                                    | [HSK-1..24] Sprints 1–5 Closed     |
-|          Parametric Studio Canvas  |                                    |             (Full K&B Domain, DO,  |
+| [HSK-30] WebMCP Bridge & Vercel    |                                    | [HSK-1..24] Sprints 1–5 Closed     |
+|          AI SDK Copilot Integration|                                    |             (Full K&B Domain, DO,  |
 |                                    |                                    |              WebMCP, Hardening)    |
-| [HSK-30] WebMCP Bridge & Vercel    |                                    | [HSK-25] ADR-0005 Next.js Frontend |
-|          AI SDK Copilot Integration|                                    |          on Vercel Architecture    |
+| [HSK-31] Enterprise Studio UX: BOM,|                                    | [HSK-25] ADR-0005 Next.js Frontend |
+|          NKBA Checks, Consent Gates|                                    |          on Vercel Architecture    |
 |                                    |                                    |                                    |
-| [HSK-31] Enterprise Studio UX: BOM,|                                    | [HSK-26] Next.js 16 App Scaffold   |
-|          NKBA Checks, Consent Gates|                                    |          & Monorepo Integration    |
+| [HSK-32] Vercel Deploy Automation  |                                    | [HSK-26] Next.js 16 App Scaffold   |
+|          & Full Stack Verification |                                    |          & Monorepo Integration    |
 |                                    |                                    |                                    |
-| [HSK-32] Vercel Deploy Automation  |                                    | [HSK-27] API Client, Proxy Rewrites|
-|          & Full Stack Verification |                                    |          & DO Session State Sync   |
+|                                    |                                    | [HSK-27] API Client, Proxy Rewrites|
+|                                    |                                    |          & DO Session State Sync   |
 |                                    |                                    |                                    |
 |                                    |                                    | [HSK-28] 2D Architectural Floorplan|
 |                                    |                                    |          & Fixture Drag-and-Drop   |
+|                                    |                                    |                                    |
+|                                    |                                    | [HSK-29] React Three Fiber 3D      |
+|                                    |                                    |          Parametric Studio Canvas  |
 +------------------------------------+------------------------------------+------------------------------------+
 ```
 
@@ -326,21 +329,21 @@ Migrate Handshake's frontend to a production Next.js 16+ App Router application 
 ### [HSK-29] React Three Fiber (R3F) 3D Studio Visualizer
 
 - **Issue**: #29
-- **Branch**: `hsk-23-r3f-3d-visualizer`
+- **Branch**: `hsk-23-r3f-3d-studio`
 - **Type**: Story / 3D Graphics
 - **Priority**: P0 (Highest)
-- **Status**: `PLANNED`
+- **Status**: `DONE`
 - **Assignee**: 3D Graphics & Senior Frontend Engineer
 - **Tasks**:
-  - [ ] Scaffold `<Canvas3D>` component using `@react-three/fiber` and `@react-three/drei` with SSR dynamic loading (`next/dynamic ssr: false`).
-  - [ ] Build procedural parametric 3D models for all 16 catalog items:
+  - [x] Scaffold `<Canvas3D>` component using `@react-three/fiber` and `@react-three/drei` with SSR dynamic loading (`next/dynamic ssr: false`).
+  - [x] Build procedural parametric 3D models for all 16 catalog items:
     - Base, wall, and tall kitchen cabinets with door/drawer geometry and countertop slabs.
     - Appliances (refrigerator with door swing, range with cooktop burners, hood, dishwasher).
     - Bathroom fixtures (vanity with undermount sink, freestanding tub, open glass shower, toilet).
-  - [ ] Build 3D wall extrusion with window and door opening cutouts.
-  - [ ] Implement PBR materials (matte white, shaker gray, walnut woodgrain, quartz countertop, brushed brass, matte black metal).
-  - [ ] Multi-camera controller: OrbitControls (3D perspective fly-around), First-Person (walkthrough / eye-level 60" elevation), and Orthographic top-down plan.
-  - [ ] Studio lighting setup: directional sunlight through modeled windows, soft ambient fill, and contact shadows.
+  - [x] Build 3D wall extrusion with window and door opening cutouts.
+  - [x] Implement PBR materials (matte white, shaker gray, walnut woodgrain, quartz countertop, brushed brass, matte black metal).
+  - [x] Multi-camera controller: OrbitControls (3D perspective fly-around), First-Person (walkthrough / eye-level 60" elevation), and Orthographic top-down plan.
+  - [x] Studio lighting setup: directional sunlight through modeled windows, soft ambient fill, and contact shadows.
 
 ---
 

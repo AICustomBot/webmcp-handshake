@@ -23,10 +23,15 @@ import {
   Layers,
   Move,
   RotateCw,
+  Eye,
+  Footprints,
+  Camera,
 } from 'lucide-react';
 import { CONTRACT_VERSION } from '@handshake/contracts';
 import { useStudioStore } from '@/lib/store/studio-store';
 import { Canvas2D, formatDimension, resolveCatalogProduct } from '@/components/studio/canvas-2d';
+import { Canvas3DWrapper } from '@/components/studio/canvas-3d-wrapper';
+import { WebGLFallbackBanner } from '@/components/studio/webgl-fallback-banner';
 
 export default function StudioPage() {
   const {
@@ -35,6 +40,7 @@ export default function StudioPage() {
     evaluation,
     catalog,
     viewportMode,
+    cameraMode,
     zoom,
     gridSnap,
     selectedItemId,
@@ -46,6 +52,7 @@ export default function StudioPage() {
     refreshState,
     hydrate,
     setViewportMode,
+    setCameraMode,
     setZoom,
     setPan,
     setGridSnap,
@@ -219,6 +226,9 @@ export default function StudioPage() {
         </div>
       )}
 
+      {/* WebGL Fallback Notification Banner */}
+      <WebGLFallbackBanner />
+
       {/* Main Studio Viewport Container */}
       <div className="flex flex-1 flex-col p-4 sm:p-6">
         <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-5">
@@ -251,6 +261,51 @@ export default function StudioPage() {
                 <span>3D Spatial (R3F)</span>
               </button>
             </div>
+
+            {/* 3D Camera Mode Switcher (Visible in 3D Mode) */}
+            {viewportMode === '3d' && (
+              <div className="flex items-center rounded-lg border border-indigo-500/30 bg-slate-800/90 p-1">
+                <button
+                  type="button"
+                  onClick={() => setCameraMode('orbit')}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                    cameraMode === 'orbit'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                  title="Perspective Fly-Around Orbit"
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                  <span>Orbit</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCameraMode('first-person')}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                    cameraMode === 'first-person'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                  title='First-Person Walkthrough (Eye-Level 60" Elevation with WASD / Touch)'
+                >
+                  <Footprints className="h-3.5 w-3.5" />
+                  <span>Walkthrough (60&quot;)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCameraMode('orthographic')}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                    cameraMode === 'orthographic'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                  title="Orthographic Top-Down Plan (North-Aligned)"
+                >
+                  <Camera className="h-3.5 w-3.5" />
+                  <span>Top-Down</span>
+                </button>
+              </div>
+            )}
 
             {/* Global Studio Canvas Controls */}
             <div className="flex flex-wrap items-center gap-2">
@@ -334,37 +389,7 @@ export default function StudioPage() {
 
           {/* Primary Viewport Area */}
           <div className="relative flex flex-1 flex-col overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/50 shadow-2xl min-h-[560px] md:min-h-[640px]">
-            {viewportMode === '2d' ? (
-              <Canvas2D />
-            ) : (
-              <div className="relative flex flex-1 flex-col items-center justify-center p-8 text-center">
-                <div className="max-w-md space-y-4">
-                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-indigo-500/30 bg-indigo-500/10 text-indigo-400">
-                    <Box className="h-8 w-8" />
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="text-xl font-bold text-white">React Three Fiber 3D Studio</h3>
-                    <p className="text-sm text-slate-400">
-                      High-fidelity procedural parametric 3D visualizer with PBR materials, contact
-                      shadows, OrbitControls, and First-Person walkthrough.
-                    </p>
-                    <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3 py-1 text-xs text-indigo-300">
-                      <span>Sprint 6 &bull; Milestone HSK-29</span>
-                    </div>
-                  </div>
-                  <div className="pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setViewportMode('2d')}
-                      className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-500"
-                    >
-                      <Compass className="h-4 w-4" />
-                      <span>Return to 2D Architectural Floorplan</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
+            {viewportMode === '2d' ? <Canvas2D /> : <Canvas3DWrapper />}
           </div>
 
           {/* Placed Fixtures & Details Drawer */}
