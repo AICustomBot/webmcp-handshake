@@ -5,3 +5,7 @@ coverage/
 .agents/
 .workbuddy-ai/
 artifacts/
+.next/
+apps/web/.next/
+apps/web/next-env.d.ts
+pnpm-lock.yaml
