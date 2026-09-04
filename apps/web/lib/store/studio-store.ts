@@ -89,6 +89,7 @@ export interface StudioActions {
     action: ProtectedAction,
     payload: Record<string, string>,
     proof: string,
+    confirmationId?: string,
   ) => Promise<ProtectedActionResponse | null>;
   resetSession: () => void;
   setViewportMode: (mode: '2d' | '3d') => void;
@@ -353,6 +354,7 @@ export const createStudioStore = (client: HandshakeApiClient = defaultApiClient)
       action: ProtectedAction,
       payload: Record<string, string>,
       proof: string,
+      confirmationId?: string,
     ) => {
       const { sessionId, capability } = get();
       if (!sessionId || !capability) {
@@ -366,6 +368,7 @@ export const createStudioStore = (client: HandshakeApiClient = defaultApiClient)
           action,
           payload,
           proof,
+          confirmationId,
           idempotencyKey,
         });
         set({ isSyncing: false });
