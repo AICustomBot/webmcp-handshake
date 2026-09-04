@@ -63,6 +63,12 @@ export interface StudioState {
   cameraMode: 'orbit' | 'first-person' | 'orthographic';
   webglStatus: WebGLStatus;
   webglError: string | null;
+  isCopilotOpen: boolean;
+  confirmationRequest: {
+    key: string;
+    action: ProtectedAction;
+    payload: Record<string, string>;
+  } | null;
   selectedItemId: string | null;
   hoveredItemId: string | null;
   zoom: number;
@@ -84,6 +90,15 @@ export interface StudioActions {
     decision: 'approved' | 'rejected',
   ) => Promise<Proposal | null>;
   apply: (proposalId: string, proposalHash: string, expectedVersion: number) => Promise<void>;
+  setActiveProposal: (proposal: Proposal | null) => void;
+  setCopilotOpen: (open: boolean) => void;
+  setConfirmationRequest: (
+    req: {
+      key: string;
+      action: ProtectedAction;
+      payload: Record<string, string>;
+    } | null,
+  ) => void;
   moveItem: (itemId: string, x: number, y: number, rotationDeg?: number) => Promise<void>;
   requestConfirmation: (
     action: ProtectedAction,
@@ -122,6 +137,8 @@ export const createStudioStore = (client: HandshakeApiClient = defaultApiClient)
     cameraMode: 'orbit',
     webglStatus: 'ready',
     webglError: null,
+    isCopilotOpen: false,
+    confirmationRequest: null,
     selectedItemId: null,
     hoveredItemId: null,
     zoom: 1,
@@ -402,6 +419,8 @@ export const createStudioStore = (client: HandshakeApiClient = defaultApiClient)
         cameraMode: 'orbit',
         webglStatus: 'ready',
         webglError: null,
+        isCopilotOpen: false,
+        confirmationRequest: null,
         selectedItemId: null,
         hoveredItemId: null,
         zoom: 1,
@@ -412,6 +431,16 @@ export const createStudioStore = (client: HandshakeApiClient = defaultApiClient)
         error: null,
       });
     },
+
+    setActiveProposal: (activeProposal: Proposal | null) => set({ activeProposal }),
+    setCopilotOpen: (isCopilotOpen: boolean) => set({ isCopilotOpen }),
+    setConfirmationRequest: (
+      confirmationRequest: {
+        key: string;
+        action: ProtectedAction;
+        payload: Record<string, string>;
+      } | null,
+    ) => set({ confirmationRequest }),
 
     setViewportMode: (viewportMode: '2d' | '3d') => set({ viewportMode }),
     setCameraMode: (cameraMode: 'orbit' | 'first-person' | 'orthographic') => set({ cameraMode }),
