@@ -46,20 +46,17 @@ Migrate Handshake's frontend to a production Next.js 16+ App Router application 
 +------------------------------------+------------------------------------+------------------------------------+
 | TO DO                              | IN PROGRESS                        | DONE                               |
 +------------------------------------+------------------------------------+------------------------------------+
-| [HSK-27] API Client, Proxy Rewrites|                                    | [HSK-1..24] Sprints 1–5 Closed     |
-|          & DO Session State Sync   |                                    |             (Full K&B Domain, DO,  |
+| [HSK-28] 2D Architectural Floorplan|                                    | [HSK-1..24] Sprints 1–5 Closed     |
+|          & Fixture Drag-and-Drop   |                                    |             (Full K&B Domain, DO,  |
 |                                    |                                    |              WebMCP, Hardening)    |
-| [HSK-28] 2D Architectural Floorplan|                                    | [HSK-25] ADR-0005 Next.js Frontend |
-|          & Fixture Drag-and-Drop   |                                    |          on Vercel Architecture    |
+| [HSK-29] React Three Fiber 3D      |                                    | [HSK-25] ADR-0005 Next.js Frontend |
+|          Parametric Studio Canvas  |                                    |          on Vercel Architecture    |
 |                                    |                                    |                                    |
-| [HSK-29] React Three Fiber 3D      |                                    | [HSK-26] Next.js 16 App Scaffold   |
-|          Parametric Studio Canvas  |                                    |          & Monorepo Integration    |
+| [HSK-30] WebMCP Bridge & Vercel    |                                    | [HSK-26] Next.js 16 App Scaffold   |
+|          AI SDK Copilot Integration|                                    |          & Monorepo Integration    |
 |                                    |                                    |                                    |
-| [HSK-30] WebMCP Bridge & Vercel    |                                    |                                    |
-|          AI SDK Copilot Integration|                                    |                                    |
-|                                    |                                    |                                    |
-| [HSK-31] Enterprise Studio UX: BOM,|                                    |                                    |
-|          NKBA Checks, Consent Gates|                                    |                                    |
+| [HSK-31] Enterprise Studio UX: BOM,|                                    | [HSK-27] API Client, Proxy Rewrites|
+|          NKBA Checks, Consent Gates|                                    |          & DO Session State Sync   |
 |                                    |                                    |                                    |
 | [HSK-32] Vercel Deploy Automation  |                                    |                                    |
 |          & Full Stack Verification |                                    |                                    |
@@ -297,14 +294,14 @@ Migrate Handshake's frontend to a production Next.js 16+ App Router application 
 - **Branch**: `hsk-21-api-client-state-sync`
 - **Type**: Story / Client Infrastructure
 - **Priority**: P0 (Highest)
-- **Status**: `PLANNED`
+- **Status**: `CLOSED`
 - **Assignee**: Senior Frontend Engineer
 - **Tasks**:
-  - [ ] Implement typed API client (`lib/api-client.ts`) covering all 10 worker endpoints.
-  - [ ] Enforce session capability header (`x-handshake-capability`) and error envelope mapping (`isErrorCode`).
-  - [ ] Build central Zustand studio store (`lib/store/studio-store.ts`) for session state, active proposal, zoom, selection, and viewport mode.
-  - [ ] Implement session persistence with local/session storage recovery and atomic reset action.
-  - [ ] Unit test API client with mock fetch responses verifying version mismatch (409) and rate limit (429) handling.
+  - [x] Implement typed API client (`lib/api-client.ts`) covering all 10 worker endpoints.
+  - [x] Enforce session capability header (`x-handshake-capability`) and error envelope mapping (`isErrorCode`).
+  - [x] Build central Zustand studio store (`lib/store/studio-store.ts`) for session state, active proposal, zoom, selection, and viewport mode.
+  - [x] Implement session persistence with local/session storage recovery and atomic reset action.
+  - [x] Unit test API client with mock fetch responses verifying version mismatch (409) and rate limit (429) handling.
 
 ---
 
