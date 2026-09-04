@@ -46,14 +46,15 @@ Migrate Handshake's frontend to a production Next.js 16+ App Router application 
 +------------------------------------+------------------------------------+------------------------------------+
 | TO DO                              | IN PROGRESS                        | DONE                               |
 +------------------------------------+------------------------------------+------------------------------------+
-| [HSK-30] WebMCP Bridge & Vercel    |                                    | [HSK-1..24] Sprints 1–5 Closed     |
-|          AI SDK Copilot Integration|                                    |             (Full K&B Domain, DO,  |
-|                                    |                                    |              WebMCP, Hardening)    |
-| [HSK-31] Enterprise Studio UX: BOM,|                                    | [HSK-25] ADR-0005 Next.js Frontend |
-|          NKBA Checks, Consent Gates|                                    |          on Vercel Architecture    |
+| [HSK-31] Enterprise Studio UX: BOM,| [HSK-30] WebMCP Bridge & Vercel    | [HSK-1..24] Sprints 1–5 Closed     |
+|          NKBA Checks, Consent Gates|          AI SDK Copilot Integration|             (Full K&B Domain, DO,  |
+|                                    |          (Issue #16, hsk-24)       |              WebMCP, Hardening)    |
+| [HSK-32] Vercel Deploy Automation  |                                    |                                    |
+|          & Full Stack Verification |                                    | [HSK-25] ADR-0005 Next.js Frontend |
+|                                    |                                    |          on Vercel Architecture    |
 |                                    |                                    |                                    |
-| [HSK-32] Vercel Deploy Automation  |                                    | [HSK-26] Next.js 16 App Scaffold   |
-|          & Full Stack Verification |                                    |          & Monorepo Integration    |
+|                                    |                                    | [HSK-26] Next.js 16 App Scaffold   |
+|                                    |                                    |          & Monorepo Integration    |
 |                                    |                                    |                                    |
 |                                    |                                    | [HSK-27] API Client, Proxy Rewrites|
 |                                    |                                    |          & DO Session State Sync   |
@@ -349,18 +350,18 @@ Migrate Handshake's frontend to a production Next.js 16+ App Router application 
 
 ### [HSK-30] WebMCP Bridge & Vercel AI SDK Copilot Integration
 
-- **Issue**: #30
-- **Branch**: `hsk-24-webmcp-ai-sdk`
+- **Issue**: #16
+- **Branch**: `hsk-24-webmcp-copilot`
 - **Type**: Story / AI Agent Integration
 - **Priority**: P0 (Highest)
-- **Status**: `PLANNED`
+- **Status**: `DONE`
 - **Assignee**: AI Engineer & Senior Architect
 - **Tasks**:
-  - [ ] Implement `useWebMCP` React hook to register all 9 contracted tools on `document.modelContext` with mount/unmount lifecycle cleanup.
-  - [ ] Build in-app AI Copilot chat drawer using Vercel AI SDK (`ai` v6, `useChat`).
-  - [ ] Expose the 9 contracted tools to the AI Copilot via client tool execution calling the studio store and Worker API.
-  - [ ] Enforce consent gate in copilot: agent calls produce non-mutating proposals only; UI renders human approval action cards.
-  - [ ] Fallback banner when neither WebMCP nor AI copilot key is present.
+  - [x] Implement `useWebMCP` React hook to register all 9 contracted tools on `document.modelContext` with mount/unmount lifecycle cleanup.
+  - [x] Build in-app AI Copilot chat drawer using Vercel AI SDK (`useChat`).
+  - [x] Expose the 9 contracted tools to the AI Copilot via client tool execution calling the studio store and Worker API.
+  - [x] Enforce consent gate in copilot: agent calls produce non-mutating proposals only; UI renders human approval action cards.
+  - [x] Fallback banner when WebMCP is unavailable (e.g. ChatGPT in-app browser).
 
 ---
 

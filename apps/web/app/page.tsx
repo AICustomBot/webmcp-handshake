@@ -7,6 +7,7 @@ import {
   Compass,
   Box,
   Sparkles,
+  Bot,
   Cpu,
   CheckCircle2,
   Plus,
@@ -29,9 +30,12 @@ import {
 } from 'lucide-react';
 import { CONTRACT_VERSION } from '@handshake/contracts';
 import { useStudioStore } from '@/lib/store/studio-store';
+import { useWebMCP } from '@/lib/hooks/use-webmcp';
 import { Canvas2D, formatDimension, resolveCatalogProduct } from '@/components/studio/canvas-2d';
 import { Canvas3DWrapper } from '@/components/studio/canvas-3d-wrapper';
 import { WebGLFallbackBanner } from '@/components/studio/webgl-fallback-banner';
+import { WebMCPFallbackBanner } from '@/components/studio/webmcp-fallback-banner';
+import { CopilotDrawer } from '@/components/studio/copilot-drawer';
 
 export default function StudioPage() {
   const {
@@ -47,6 +51,8 @@ export default function StudioPage() {
     isLoading,
     isSyncing,
     error,
+    isCopilotOpen,
+    setCopilotOpen,
     initSession,
     resetSession,
     refreshState,
@@ -59,6 +65,8 @@ export default function StudioPage() {
     selectItem,
     moveItem,
   } = useStudioStore();
+
+  const { isAvailable: isWebMCPAvailable, registeredCount } = useWebMCP();
 
   useEffect(() => {
     hydrate();
@@ -205,6 +213,22 @@ export default function StudioPage() {
                 </button>
               </div>
             )}
+
+            {/* AI Copilot Toggle */}
+            <button
+              type="button"
+              onClick={() => setCopilotOpen(!isCopilotOpen)}
+              className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-all ${
+                isCopilotOpen
+                  ? 'border-indigo-500 bg-indigo-600 text-white shadow-sm'
+                  : 'border-indigo-500/30 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 hover:text-white'
+              }`}
+              title="Toggle Handshake AI Copilot"
+            >
+              <Bot className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">AI Copilot</span>
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            </button>
           </div>
         </div>
       </header>
@@ -228,6 +252,9 @@ export default function StudioPage() {
 
       {/* WebGL Fallback Notification Banner */}
       <WebGLFallbackBanner />
+
+      {/* WebMCP & ChatGPT In-App Browser Fallback Banner */}
+      <WebMCPFallbackBanner />
 
       {/* Main Studio Viewport Container */}
       <div className="flex flex-1 flex-col p-4 sm:p-6">
@@ -474,6 +501,9 @@ export default function StudioPage() {
           </div>
         </div>
       </div>
+
+      {/* Slide-Over AI Copilot Drawer */}
+      <CopilotDrawer />
     </main>
   );
 }
